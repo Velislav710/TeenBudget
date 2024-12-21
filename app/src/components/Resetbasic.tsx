@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const Resetbasic = () => {
@@ -8,6 +8,34 @@ const Resetbasic = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // useEffect за валидация на токена при зареждане на компонента
+  useEffect(() => {
+    const validateToken = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/token-validation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Token validation failed');
+        }
+
+        const result = await response.json();
+        console.log('result: ', result);
+        if (!result.valid) navigate('/login'); // Пренасочване към формата за влизане при невалиден токен
+      } catch (error) {
+        console.error('Error validating token:', error);
+        navigate('/login'); // Пренасочване към грешка ако не може да се валидара токенът
+      }
+    };
+
+    validateToken();
+  }, [token, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

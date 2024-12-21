@@ -220,7 +220,9 @@ app.post("/password-reset-request", (req, res) => {
     });
 
     // Create a reset link
-    const resetLink = `http://localhost:5173/resetbasic/${token}`;
+    const resetLink = `http://localhost:5173/resetpassword/resetbasic/${encodeURIComponent(
+      token
+    )}`;
 
     const mailOptions = {
       from: EMAIL_USER,

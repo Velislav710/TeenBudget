@@ -19,7 +19,10 @@ const App = () => {
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/verify" element={<VerifyPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/resetbasic/:token" element={<Resetbasic />} />
+        <Route
+          path="resetpassword/resetbasic/:token"
+          element={<Resetbasic />}
+        />
 
         <Route
           path="/main"

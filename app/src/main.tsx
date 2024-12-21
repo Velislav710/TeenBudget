@@ -14,8 +14,3 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     </Router>
   </React.StrictMode>,
 );
-const Button = () => {
-  return (
-      <button className='btn btn-primary'>Log Out</button>
-  )
-}
