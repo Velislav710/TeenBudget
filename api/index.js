@@ -220,13 +220,20 @@ app.post("/password-reset-request", (req, res) => {
     });
 
     // Create a reset link
-    const resetLink = `http://localhost:5173/resetpassword/resetcover/${token}`;
+    const resetLink = `http://localhost:5173/resetbasic/${token}`;
 
     const mailOptions = {
       from: EMAIL_USER,
       to: email,
       subject: "Промяна на паролата за ТийнБюджет",
-      html: `<p>Натиснете <a href="${resetLink}">тук</a>, за да промените паролата си.</p>`
+      html: `
+      <div style="text-align: center; background-color: rgba(244, 211, 139, 0.5); margin: 2% 3%; padding: 3% 1%; border: 4px dotted rgb(178, 50, 0); border-radius: 20px">
+        <h2>Заявка за промяна на парола в <span style="color: rgb(178, 50, 0); font-weight: 600;">💸</span>ТийнБюджет<span style="color: rgb(178, 50, 0); font-weight: 600;">💸</span></h2>
+        <p>Натиснете <a href="${resetLink}">тук</a>, за да промените паролата си.</p>
+      </div>
+      <div>
+        <p style="border-radius: 5px; background-color: rgba(178, 50, 0, 0.2); text-align: center; font-size: 13px; margin: 5% 25% 0% 25%">Не сте поискали промяна? Игнорирайте този имейл.</p>
+      </div>`
     };
 
     transporter.sendMail(mailOptions, (error, info) => {

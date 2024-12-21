@@ -9,7 +9,7 @@ interface LoginErrors {
   password: boolean;
 }
 
-const LoginPage = ({}: {}) => {
+const LoginPage = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
 
@@ -46,31 +46,17 @@ const LoginPage = ({}: {}) => {
         });
 
         const data = await response.json();
-        console.log('data: ', data);
-        if (data) {
+        if (data.token) {
           localStorage.setItem('authToken', data.token);
           navigate('/main');
         } else {
-          throw new Error(data.message || 'Invalid login credentials');
+          throw new Error(data.message || 'Невалидни данни за вход');
         }
       } catch (error: any) {
-        alert(error.message || 'An error occurred while logging in');
+        alert(error.message || 'Възникна грешка при влизането');
       }
     }
   };
-
-  const inputClasses = (error: boolean) => `
-    w-full px-4 py-3 rounded-xl text-lg transition-all duration-300
-    ${
-      isDarkMode
-        ? error
-          ? 'bg-red-900/20 border-2 border-red-500 text-white placeholder-red-400'
-          : 'bg-gray-700/50 border-2 border-gray-600 text-white placeholder-gray-400 focus:border-emerald-500'
-        : error
-        ? 'bg-red-50 border-2 border-red-500 text-red-900 placeholder-red-400'
-        : 'bg-white border-2 border-amber-300 text-amber-900 placeholder-amber-400 focus:border-emerald-500'
-    }
-  `;
 
   React.useEffect(() => {
     const checkTokenValidity = async () => {
@@ -116,6 +102,19 @@ const LoginPage = ({}: {}) => {
 
     checkTokenValidity();
   }, [navigate]);
+
+  const inputClasses = (error: boolean) => `
+    w-full px-4 py-3 rounded-xl text-lg transition-all duration-300
+    ${
+      isDarkMode
+        ? error
+          ? 'bg-red-900/20 border-2 border-red-500 text-white placeholder-red-400'
+          : 'bg-gray-700/50 border-2 border-gray-600 text-white placeholder-gray-400 focus:border-emerald-500'
+        : error
+        ? 'bg-red-50 border-2 border-red-500 text-red-900 placeholder-red-400'
+        : 'bg-white border-2 border-amber-300 text-amber-900 placeholder-amber-400 focus:border-emerald-500'
+    }
+  `;
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
@@ -245,8 +244,7 @@ const LoginPage = ({}: {}) => {
                   </p>
                 )}
               </div>
-
-              <div className="flex items-center">
+              <div className="flex items-center justify-between">
                 <label
                   className={`flex items-center cursor-pointer group ${
                     isDarkMode ? 'text-gray-200' : 'text-amber-900'
@@ -285,8 +283,17 @@ const LoginPage = ({}: {}) => {
                   </div>
                   <span className="ml-2 font-medium">Запомни ме</span>
                 </label>
+                <Link
+                  to="/forgot-password"
+                  className={`font-medium ${
+                    isDarkMode
+                      ? 'text-emerald-400 hover:text-emerald-300'
+                      : 'text-emerald-600 hover:text-emerald-700'
+                  } transition-colors`}
+                >
+                  Забравена парола?
+                </Link>
               </div>
-
               <button
                 type="submit"
                 className={`w-full ${
@@ -297,7 +304,6 @@ const LoginPage = ({}: {}) => {
               >
                 Вход
               </button>
-
               <div className="text-center mt-6">
                 <Link
                   to="/signup"
