@@ -32,7 +32,7 @@ const LoginPage = () => {
 
     const validationErrors = {
       email: !email || !isValidEmail(email),
-      password: !password || password.length < 6,
+      password: !password,
     };
 
     setErrors(validationErrors);
