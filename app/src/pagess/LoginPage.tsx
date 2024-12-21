@@ -9,7 +9,7 @@ interface LoginErrors {
   password: boolean;
 }
 
-const LoginPage = () => {
+const LoginPage = ({}: {}) => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
 
@@ -46,14 +46,15 @@ const LoginPage = () => {
         });
 
         const data = await response.json();
-        if (data.token) {
+        console.log('data: ', data);
+        if (data) {
           localStorage.setItem('authToken', data.token);
           navigate('/main');
         } else {
-          throw new Error(data.message || 'Невалидни данни за вход');
+          throw new Error(data.message || 'Invalid login credentials');
         }
       } catch (error: any) {
-        alert(error.message || 'Възникна грешка при влизането');
+        alert(error.message || 'An error occurred while logging in');
       }
     }
   };
@@ -71,27 +72,95 @@ const LoginPage = () => {
     }
   `;
 
+  React.useEffect(() => {
+    const checkTokenValidity = async () => {
+      const token =
+        localStorage.getItem('authToken') ||
+        sessionStorage.getItem('authToken');
+
+      if (token) {
+        try {
+          const response = await fetch(
+            `http://localhost:5000/token-validation`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ token }),
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error('Token validation failed');
+          }
+
+          const result = await response.json();
+
+          if (result.valid) {
+            navigate(`/main`);
+          } else {
+            console.log('Invalid token');
+            localStorage.removeItem('authToken');
+            sessionStorage.removeItem('authToken');
+            navigate('/login');
+          }
+        } catch (error) {
+          console.error('Error validating token:', error);
+          navigate('/login');
+        }
+      } else {
+        navigate('/login');
+      }
+    };
+
+    checkTokenValidity();
+  }, [navigate]);
+
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-r from-emerald-400 to-amber-400'} flex flex-col`}>
+      <div
+        className={`min-h-screen ${
+          isDarkMode
+            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
+            : 'bg-gradient-to-r from-emerald-400 to-amber-400'
+        } flex flex-col`}
+      >
         <div className="absolute top-4 right-4">
           <ThemeToggle />
         </div>
 
         <div className="flex-grow flex items-center justify-center p-6">
-          <form onSubmit={handleLogin} className={`w-full max-w-md ${isDarkMode ? 'bg-gray-800/90' : 'bg-white/95'} rounded-2xl shadow-2xl p-10 backdrop-blur-sm`}>
+          <form
+            onSubmit={handleLogin}
+            className={`w-full max-w-md ${
+              isDarkMode ? 'bg-gray-800/90' : 'bg-white/95'
+            } rounded-2xl shadow-2xl p-10 backdrop-blur-sm`}
+          >
             <div className="mb-10 text-center">
-              <h1 className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-amber-950'}`}>
+              <h1
+                className={`text-4xl font-bold ${
+                  isDarkMode ? 'text-white' : 'text-amber-950'
+                }`}
+              >
                 Добре дошли отново
               </h1>
-              <p className={`mt-3 text-lg ${isDarkMode ? 'text-gray-300' : 'text-amber-900'}`}>
+              <p
+                className={`mt-3 text-lg ${
+                  isDarkMode ? 'text-gray-300' : 'text-amber-900'
+                }`}
+              >
                 Въведете вашите данни за достъп
               </p>
             </div>
 
             <div className="space-y-6">
               <div>
-                <label className={`text-base font-semibold block mb-2 ${isDarkMode ? 'text-gray-200' : 'text-amber-900'}`}>
+                <label
+                  className={`text-base font-semibold block mb-2 ${
+                    isDarkMode ? 'text-gray-200' : 'text-amber-900'
+                  }`}
+                >
                   Имейл
                 </label>
                 <input
@@ -109,7 +178,11 @@ const LoginPage = () => {
               </div>
 
               <div>
-                <label className={`text-base font-semibold block mb-2 ${isDarkMode ? 'text-gray-200' : 'text-amber-900'}`}>
+                <label
+                  className={`text-base font-semibold block mb-2 ${
+                    isDarkMode ? 'text-gray-200' : 'text-amber-900'
+                  }`}
+                >
                   Парола
                 </label>
                 <div className="relative">
@@ -123,16 +196,45 @@ const LoginPage = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-amber-700 hover:text-amber-800'}`}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+                      isDarkMode
+                        ? 'text-gray-400 hover:text-gray-300'
+                        : 'text-amber-700 hover:text-amber-800'
+                    }`}
                   >
                     {showPassword ? (
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
                       </svg>
                     )}
                   </button>
@@ -144,42 +246,45 @@ const LoginPage = () => {
                 )}
               </div>
 
-              <div className="flex items-center justify-between">
-                <label className={`flex items-center cursor-pointer group ${isDarkMode ? 'text-gray-200' : 'text-amber-900'}`}>
+              <div className="flex items-center">
+                <label
+                  className={`flex items-center cursor-pointer group ${
+                    isDarkMode ? 'text-gray-200' : 'text-amber-900'
+                  }`}
+                >
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className={`w-5 h-5 border-2 rounded transition-all flex items-center justify-center ${
-                    rememberMe
-                      ? isDarkMode
-                        ? 'bg-emerald-600 border-emerald-600'
-                        : 'bg-emerald-500 border-emerald-500'
-                      : isDarkMode
-                      ? 'border-gray-600'
-                      : 'border-amber-300'
-                  }`}>
+                  <div
+                    className={`w-5 h-5 border-2 rounded transition-all flex items-center justify-center ${
+                      rememberMe
+                        ? isDarkMode
+                          ? 'bg-emerald-600 border-emerald-600'
+                          : 'bg-emerald-500 border-emerald-500'
+                        : isDarkMode
+                        ? 'border-gray-600'
+                        : 'border-amber-300'
+                    }`}
+                  >
                     {rememberMe && (
-                      <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
                         <path d="M5 13l4 4L19 7"></path>
                       </svg>
                     )}
                   </div>
                   <span className="ml-2 font-medium">Запомни ме</span>
                 </label>
-
-                <Link
-                  to="/forgot-password"
-                  className={`font-medium ${
-                    isDarkMode 
-                      ? 'text-emerald-400 hover:text-emerald-300' 
-                      : 'text-emerald-600 hover:text-emerald-700'
-                  } transition-colors`}
-                >
-                  Забравена парола?
-                </Link>
               </div>
 
               <button
@@ -215,4 +320,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-

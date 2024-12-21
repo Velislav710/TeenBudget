@@ -9,13 +9,34 @@ const crypto = require("crypto");
 const db = require("./database");
 
 const app = express();
-app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
+require("dotenv").config();
+
+const whitelist = ["http://localhost:5173"];
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || whitelist.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  optionSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+
+let verificationCodes = {};
 
 const SECRET_KEY = "1a2b3c4d5e6f7g8h9i0jklmnopqrstuvwxyz123456";
 const EMAIL_USER = "no-reply@teenbudget.noit.eu";
 const EMAIL_PASS = "Noit_2025";
 
+// Create a transporter object using SMTP transport
 const transporter = nodemailer.createTransport({
   host: "teenbudget.noit.eu", // Заменете с вашия cPanel mail сървър
   port: 587, // Използвайте 465 за SSL или 587 за TLS
@@ -52,6 +73,7 @@ app.post("/signup", (req, res) => {
       expiresAt: Date.now() + 15 * 60 * 1000 // Задава 15 минути валидност
     };
 
+    // Изпраща код за потвърждение по имейл
     const mailOptions = {
       from: EMAIL_USER,
       to: email,
@@ -77,6 +99,7 @@ app.post("/signup", (req, res) => {
   });
 });
 
+// Resend Route
 app.post("/resend", (req, res) => {
   const { email } = req.body;
 
@@ -114,6 +137,7 @@ app.post("/resend", (req, res) => {
   });
 });
 
+// Verification Route
 app.post("/verify-email", (req, res) => {
   const { email, verificationCode } = req.body;
 
@@ -152,6 +176,7 @@ app.post("/verify-email", (req, res) => {
   );
 });
 
+// Sign in Route
 app.post("/signin", (req, res) => {
   const { email, password, rememberMe } = req.body;
 
@@ -176,11 +201,13 @@ app.post("/signin", (req, res) => {
   });
 });
 
+// Password Reset Request Route
 app.post("/password-reset-request", (req, res) => {
   const { email } = req.body;
 
   db.findUserByEmail(email, (err, results) => {
     if (err) return res.status(400).json({ error: err.message });
+
     if (results.length === 0) {
       return res
         .status(400)
@@ -188,23 +215,18 @@ app.post("/password-reset-request", (req, res) => {
     }
 
     const user = results[0];
-    const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: "15m" });
+    const token = jwt.sign({ id: user.id }, SECRET_KEY, {
+      expiresIn: "15m"
+    });
+
+    // Create a reset link
+    const resetLink = `http://localhost:5173/resetpassword/resetcover/${token}`;
 
     const mailOptions = {
       from: EMAIL_USER,
       to: email,
       subject: "Промяна на паролата за ТийнБюджет",
-      html: `
-      <div style="text-align: center; background-color: rgba(244, 211, 139, 0.5); margin: 2% 3%; padding: 3% 1%; border: 4px dotted rgb(178, 50, 0); border-radius: 20px">
-        <h2>Заявка за промяна на парола в <span style="color: rgb(178, 50, 0); font-weight: 600;">🕮</span>ТийнБюджет<span style="color: rgb(178, 50, 0); font-weight: 600;">🕮</span></h2>
-        <hr style="border: 0.5px solid rgb(178, 50, 0); width: 18%; margin-top: 6%; margin-bottom: 4%"></hr>
-        <p>Натиснете  <a href="http://localhost:5174/resetbasic/${token}"
- за промяна на паролата.</p>
- 
-      </div>
-      <div>
-        <p style="border-radius: 5px; background-color: rgba(178, 50, 0, 0.2); text-align: center; font-size: 13px; margin: 5% 25% 0% 25%">Не сте поискали промяна? Игнорирайте този имейл.</p>
-      </div>`
+      html: `<p>Натиснете <a href="${resetLink}">тук</a>, за да промените паролата си.</p>`
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
