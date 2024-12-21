@@ -197,7 +197,10 @@ app.post("/signin", (req, res) => {
     const token = jwt.sign({ id: user.id }, SECRET_KEY, {
       expiresIn: rememberMe ? "7d" : "1h"
     });
-    res.json({ message: "Успешно влизане!", token });
+
+    const encodedToken = Buffer.from(token).toString("base64");
+
+    res.json({ message: "Успешно влизане!", token: encodedToken });
   });
 });
 
@@ -219,10 +222,10 @@ app.post("/password-reset-request", (req, res) => {
       expiresIn: "15m"
     });
 
+    const encodedToken = Buffer.from(token).toString("base64");
+
     // Create a reset link
-    const resetLink = `http://localhost:5173/resetpassword/resetbasic/${encodeURIComponent(
-      token
-    )}`;
+    const resetLink = `http://localhost:5173/resetpassword/resetbasic/${encodedToken}`;
 
     const mailOptions = {
       from: EMAIL_USER,
@@ -251,7 +254,18 @@ app.post("/password-reset-request", (req, res) => {
 app.post("/password-reset", (req, res) => {
   const { token, newPassword } = req.body;
 
-  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+  // Adjust base64 URL-safe encoding to standard base64
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+
+  // Add padding if necessary
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding); // Ensure token length is a multiple of 4
+  }
+
+  const decodedToken = atob(base64Url);
+
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
     if (err) return res.status(400).json({ error: "Invalid or expired token" });
 
     const userId = decoded.id;
@@ -271,20 +285,49 @@ app.post("/password-reset", (req, res) => {
 app.post("/token-validation", (req, res) => {
   const { token } = req.body;
 
-  jwt.verify(token, SECRET_KEY, (err) => {
-    if (err) return res.json({ valid: false });
-    res.json({ valid: true });
-  });
+  // Adjust base64 URL-safe encoding to standard base64
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+
+  // Add padding if necessary
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding); // Ensure token length is a multiple of 4
+  }
+
+  // Decode the base64-encoded token
+  try {
+    const decodedToken = atob(base64Url);
+
+    // Verify the decoded token
+    jwt.verify(decodedToken, SECRET_KEY, (err) => {
+      if (err) return res.json({ valid: false });
+      res.json({ valid: true });
+    });
+  } catch (error) {
+    console.error("Error decoding token: ", error);
+    res.json({ valid: false });
+  }
 });
 
 app.get("/user-data", (req, res) => {
   const token = req.headers.authorization?.split(" ")[1]; // Extract token from Authorization header
 
-  if (!token) {
+  // Adjust base64 URL-safe encoding to standard base64
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+
+  // Add padding if necessary
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding); // Ensure token length is a multiple of 4
+  }
+
+  const decodedToken = atob(base64Url);
+
+  if (!decodedToken) {
     return res.status(401).json({ error: "Token not provided" });
   }
 
-  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
     if (err) return res.status(401).json({ error: "Invalid token" });
 
     const userId = decoded.id;

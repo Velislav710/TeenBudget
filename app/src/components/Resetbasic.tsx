@@ -13,12 +13,13 @@ const Resetbasic = () => {
   useEffect(() => {
     const validateToken = async () => {
       try {
+        // Do not encode again if the token is already base64-encoded
         const response = await fetch('http://localhost:5000/token-validation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ token }),
+          body: JSON.stringify({ token }), // Send the original token directly
         });
 
         if (!response.ok) {
@@ -27,10 +28,10 @@ const Resetbasic = () => {
 
         const result = await response.json();
         console.log('result: ', result);
-        if (!result.valid) navigate('/login'); // Пренасочване към формата за влизане при невалиден токен
+        if (!result.valid) navigate('/login'); // Redirect to login if token is invalid
       } catch (error) {
         console.error('Error validating token:', error);
-        navigate('/login'); // Пренасочване към грешка ако не може да се валидара токенът
+        navigate('/login'); // Redirect if token can't be validated
       }
     };
 
