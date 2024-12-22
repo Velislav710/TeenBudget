@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Footer from '../components/Footerr/Footer';
-import { useTheme } from '../context/ThemeContext';
-import ThemeToggle from '../components/ThemeToggle';
+import Footer from '../../components/Footerr/Footer';
+import { useTheme } from '../../context/ThemeContext';
+import ThemeToggle from '../../components/ThemeToggle';
 
 const WelcomePage = () => {
   const navigate = useNavigate();

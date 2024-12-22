@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from './context/ThemeContext';
-import ThemeToggle from './components/ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
+import ThemeToggle from '../../components/ThemeToggle';
 import {
   Chart as ChartJS,
   CategoryScale,

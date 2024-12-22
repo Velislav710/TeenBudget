@@ -1,14 +1,14 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
-import WelcomePage from './pagess/WelcomePage';
-import LoginPage from './pagess/LoginPage';
-import SignUpPage from './pagess/SignUpPage';
-import ECommerce from './ECommerce';
+import WelcomePage from './pagess/landing/WelcomePage.tsx'
+import LoginPage from './pagess/authentication/LoginPage';
+import SignUpPage from './pagess/authentication/SignUpPage';
+import ECommerce from './pagess/home/ECommerce';
 import ProtectedRoute from './layout/ProtectedRoute';
-import VerifyPage from './pagess/VerifyPage';
-import ForgotPassword from './components/ForgotPassword';
-import Resetbasic from './components/Resetbasic';
+import VerifyPage from './pagess/authentication/VerifyPage';
+import ForgotPassword from './pagess/authentication/ForgotPassword';
+import Resetbasic from './pagess/authentication/Resetbasic';
 
 const App = () => {
   return (
