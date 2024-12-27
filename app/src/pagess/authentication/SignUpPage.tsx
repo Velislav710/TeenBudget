@@ -20,7 +20,8 @@ const SignUpPage = () => {
     confirmPassword: false,
   });
 
-  const passwordStrengthRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+  const passwordStrengthRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,13 +49,16 @@ const SignUpPage = () => {
           password,
         });
 
-        const response = await fetch(`http://localhost:5000/signup`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/signup`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body,
           },
-          body,
-        });
+        );
 
         const data = await response.json();
 
@@ -83,7 +87,7 @@ const SignUpPage = () => {
       if (token) {
         try {
           const response = await fetch(
-            `http://localhost:5000/token-validation`,
+            `${import.meta.env.VITE_API_BASE_URL}/token-validation`,
             {
               method: 'POST',
               headers: {
@@ -278,7 +282,8 @@ const SignUpPage = () => {
                 </div>
                 {errors.password && (
                   <p className="mt-2 text-sm font-medium text-red-500">
-                    Паролата трябва да съдържа поне 8 символа, една главна буква, една малка буква, една цифра и един специален символ
+                    Паролата трябва да съдържа поне 8 символа, една главна
+                    буква, една малка буква, една цифра и един специален символ
                   </p>
                 )}
               </div>
@@ -358,32 +363,30 @@ const SignUpPage = () => {
                   isDarkMode
                     ? 'bg-emerald-600 hover:bg-emerald-700'
                     : 'bg-emerald-500 hover:bg-emerald-600'
-                  } text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 text-lg shadow-xl mt-6`}
-                >
-                  Създай акаунт
-                </button>
-  
-                <div className="text-center mt-6">
-                  <Link
-                    to="/login"
-                    className={`font-bold text-lg ${
-                      isDarkMode
-                        ? 'text-emerald-400 hover:text-emerald-300'
-                        : 'text-emerald-700 hover:text-emerald-800'
-                    }`}
-                  >
-                    Вече имате акаунт? Влезте
-                  </Link>
-                </div>
-              </div>
-            </form>
-          </div>
-          <Footer />
-        </div>
-      </div>
-    );
-  };
-  
-  export default SignUpPage;
-   
+                } text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 text-lg shadow-xl mt-6`}
+              >
+                Създай акаунт
+              </button>
 
+              <div className="text-center mt-6">
+                <Link
+                  to="/login"
+                  className={`font-bold text-lg ${
+                    isDarkMode
+                      ? 'text-emerald-400 hover:text-emerald-300'
+                      : 'text-emerald-700 hover:text-emerald-800'
+                  }`}
+                >
+                  Вече имате акаунт? Влезте
+                </Link>
+              </div>
+            </div>
+          </form>
+        </div>
+        <Footer />
+      </div>
+    </div>
+  );
+};
+
+export default SignUpPage;

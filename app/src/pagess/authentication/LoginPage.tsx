@@ -39,11 +39,14 @@ const LoginPage = () => {
 
     if (!validationErrors.email && !validationErrors.password) {
       try {
-        const response = await fetch('http://localhost:5000/signin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), password, rememberMe }),
-        });
+        const response = await fetch(
+          '${import.meta.env.VITE_API_BASE_URL}/signin',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email.trim(), password, rememberMe }),
+          },
+        );
 
         const data = await response.json();
         if (data.token) {
@@ -67,7 +70,7 @@ const LoginPage = () => {
       if (token) {
         try {
           const response = await fetch(
-            `http://localhost:5000/token-validation`,
+            `${import.meta.env.VITE_API_BASE_URL}/token-validation`,
             {
               method: 'POST',
               headers: {
