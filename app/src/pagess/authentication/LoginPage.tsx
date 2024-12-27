@@ -40,7 +40,7 @@ const LoginPage = () => {
     if (!validationErrors.email && !validationErrors.password) {
       try {
         const response = await fetch(
-          '${import.meta.env.VITE_API_BASE_URL}/signin',
+          `${import.meta.env.VITE_API_BASE_URL}/signin`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
