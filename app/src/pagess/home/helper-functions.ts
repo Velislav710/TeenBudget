@@ -1,7 +1,12 @@
+import { TransactionAnalysisData } from './home-types';
+
 export const fetchOpenAIResponse = async (
-  theDataYouWillPassToTheAIInTheUserPrompt: any,
+  transactionData: TransactionAnalysisData,
 ) => {
   try {
+    console.log('🚀 Изпращане на данни към AI:', transactionData);
+    console.log('API Key loaded:', !!import.meta.env.VITE_OPENAI_API_KEY);
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -10,14 +15,22 @@ export const fetchOpenAIResponse = async (
       },
       body: JSON.stringify({
         model: 'gpt-4o-2024-08-06',
+
         messages: [
           {
             role: 'system',
-            content: `ТВОЯТ SYSTEM ПРОМПТ`,
+            content: `Ти си финансов съветник за тийнейджъри. Анализирай транзакциите и създай полезни съвети за управление на бюджета. Връщай отговора САМО в JSON формат: {
+              "analysis": {
+                "summary": "кратко обобщение на финансовото състояние",
+                "recommendations": ["списък с 3 конкретни препоръки"],
+                "savingsPotential": "процент възможни спестявания"
+              }
+            }`,
           },
           {
             role: 'user',
-            content: `ТВОЯТ USER ПРОМПТ`,
+            content: `Анализирай тези финансови данни и дай препоръки:
+            ${JSON.stringify(transactionData, null, 2)}`,
           },
         ],
       }),
@@ -28,6 +41,8 @@ export const fetchOpenAIResponse = async (
     }
 
     const data = await response.json();
+    console.log('✅ AI отговор получен:', data);
+
     const rawContent = data?.choices[0]?.message?.content;
 
     if (!rawContent) {
@@ -43,7 +58,7 @@ export const fetchOpenAIResponse = async (
 
     return cleanedContent ? JSON.parse(cleanedContent) : null;
   } catch (error) {
-    console.error('Error fetching OpenAI response:', error);
+    console.error('❌ Грешка при AI заявката:', error);
     return null;
   }
 };
