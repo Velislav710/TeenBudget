@@ -36,19 +36,17 @@ const SECRET_KEY = "1a2b3c4d5e6f7g8h9i0jklmnopqrstuvwxyz123456";
 const EMAIL_USER = "no-reply@teenbudget.noit.eu";
 const EMAIL_PASS = "Noit_2025";
 
-// Create a transporter object using SMTP transport
 const transporter = nodemailer.createTransport({
-  host: "teenbudget.noit.eu", // Заменете с вашия cPanel mail сървър
-  port: 587, // Използвайте 465 за SSL или 587 за TLS
-  secure: false, // true за SSL (порт 465), false за TLS (порт 587)
+  host: "teenbudget.noit.eu",
+  port: 587,
+  secure: false,
   auth: {
-    user: EMAIL_USER, // Вашият имейл адрес
-    pass: EMAIL_PASS // Вашата имейл парола
+    user: EMAIL_USER,
+    pass: EMAIL_PASS
   },
-  debug: true // По избор, логва SMTP комуникацията за откриване на проблеми
+  debug: true
 });
 
-// Signup Route
 app.post("/signup", (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
@@ -61,19 +59,16 @@ app.post("/signup", (req, res) => {
         .json({ error: "Профил с този имейл вече съществува." });
     }
 
-    // Генерира код за потвърждение
     const verificationCode = crypto.randomInt(100000, 999999).toString();
 
-    // Съхранява временно кода
     verificationCodes[email] = {
       code: verificationCode,
       firstName,
       lastName,
-      password, // Store the password temporarily
-      expiresAt: Date.now() + 15 * 60 * 1000 // Задава 15 минути валидност
+      password,
+      expiresAt: Date.now() + 15 * 60 * 1000
     };
 
-    // Изпраща код за потвърждение по имейл
     const mailOptions = {
       from: EMAIL_USER,
       to: email,
@@ -99,21 +94,17 @@ app.post("/signup", (req, res) => {
   });
 });
 
-// Resend Route
 app.post("/resend", (req, res) => {
   const { email } = req.body;
 
-  // Генерира код за потвърждение
   const verificationCode = crypto.randomInt(100000, 999999).toString();
 
-  // Съхранява кода временно
   verificationCodes[email] = {
     ...verificationCodes[email],
     code: verificationCode,
-    expiresAt: Date.now() + 15 * 60 * 1000 // Задава 15 минути валидност
+    expiresAt: Date.now() + 15 * 60 * 1000
   };
 
-  // Изпраща нов код за потвърждение по имейл
   const mailOptions = {
     from: EMAIL_USER,
     to: email,
@@ -137,7 +128,6 @@ app.post("/resend", (req, res) => {
   });
 });
 
-// Verification Route
 app.post("/verify-email", (req, res) => {
   const { email, verificationCode } = req.body;
 
@@ -157,7 +147,6 @@ app.post("/verify-email", (req, res) => {
     return res.status(400).json({ error: "Невалиден код за потвърждение." });
   }
 
-  // Proceed with user registration
   const salt = bcrypt.genSaltSync(10);
   const hashedPassword = bcrypt.hashSync(storedData.password, salt);
 
@@ -169,14 +158,12 @@ app.post("/verify-email", (req, res) => {
     (err, result) => {
       if (err) return res.status(400).json({ error: err.message });
 
-      // Изтрива кода след регистрация
       delete verificationCodes[email];
       res.json({ message: "Успешно регистриран профил!" });
     }
   );
 });
 
-// Sign in Route
 app.post("/signin", (req, res) => {
   const { email, password, rememberMe } = req.body;
 
@@ -204,7 +191,6 @@ app.post("/signin", (req, res) => {
   });
 });
 
-// Password Reset Request Route
 app.post("/password-reset-request", (req, res) => {
   const { email } = req.body;
 
@@ -224,7 +210,6 @@ app.post("/password-reset-request", (req, res) => {
 
     const encodedToken = Buffer.from(token).toString("base64");
 
-    // Create a reset link
     const resetLink = `http://localhost:5173/resetpassword/resetbasic/${encodedToken}`;
 
     const mailOptions = {
@@ -254,13 +239,11 @@ app.post("/password-reset-request", (req, res) => {
 app.post("/password-reset", (req, res) => {
   const { token, newPassword } = req.body;
 
-  // Adjust base64 URL-safe encoding to standard base64
   let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
 
-  // Add padding if necessary
   const padding = base64Url.length % 4;
   if (padding) {
-    base64Url += "=".repeat(4 - padding); // Ensure token length is a multiple of 4
+    base64Url += "=".repeat(4 - padding);
   }
 
   const decodedToken = atob(base64Url);
@@ -270,7 +253,6 @@ app.post("/password-reset", (req, res) => {
 
     const userId = decoded.id;
 
-    // Hash the new password
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(newPassword, salt);
 
@@ -281,24 +263,19 @@ app.post("/password-reset", (req, res) => {
   });
 });
 
-// Token Validation Route
 app.post("/token-validation", (req, res) => {
   const { token } = req.body;
 
-  // Adjust base64 URL-safe encoding to standard base64
   let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
 
-  // Add padding if necessary
   const padding = base64Url.length % 4;
   if (padding) {
-    base64Url += "=".repeat(4 - padding); // Ensure token length is a multiple of 4
+    base64Url += "=".repeat(4 - padding);
   }
 
-  // Decode the base64-encoded token
   try {
     const decodedToken = atob(base64Url);
 
-    // Verify the decoded token
     jwt.verify(decodedToken, SECRET_KEY, (err) => {
       if (err) return res.json({ valid: false });
       res.json({ valid: true });
@@ -310,15 +287,13 @@ app.post("/token-validation", (req, res) => {
 });
 
 app.get("/user-data", (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1]; // Extract token from Authorization header
+  const token = req.headers.authorization?.split(" ")[1];
 
-  // Adjust base64 URL-safe encoding to standard base64
   let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
 
-  // Add padding if necessary
   const padding = base64Url.length % 4;
   if (padding) {
-    base64Url += "=".repeat(4 - padding); // Ensure token length is a multiple of 4
+    base64Url += "=".repeat(4 - padding);
   }
 
   const decodedToken = atob(base64Url);
@@ -344,7 +319,112 @@ app.get("/user-data", (req, res) => {
     });
   });
 });
-// Start server
+
+// Рутове за транзакции
+app.post("/transactions", (req, res) => {
+  const { type, amount, category, description, date } = req.body;
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding);
+  }
+
+  const decodedToken = atob(base64Url);
+
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(401).json({ error: "Невалиден токен" });
+    const userId = decoded.id;
+
+    db.createTransaction(
+      userId,
+      type,
+      amount,
+      category,
+      description,
+      date,
+      (err, result) => {
+        if (err)
+          return res.status(500).json({ error: "Грешка в базата данни" });
+
+        res.json({
+          message: "Транзакцията е добавена успешно",
+          transaction: {
+            id: result.insertId,
+            user_id: userId,
+            type,
+            amount,
+            category,
+            description,
+            date
+          }
+        });
+      }
+    );
+  });
+});
+
+app.get("/transactions", (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding);
+  }
+
+  const decodedToken = atob(base64Url);
+
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(401).json({ error: "Невалиден токен" });
+
+    const userId = decoded.id;
+
+    db.getTransactionsByUserId(userId, (err, results) => {
+      if (err) return res.status(500).json({ error: "Грешка в базата данни" });
+
+      res.json({ transactions: results });
+    });
+  });
+});
+
+app.delete("/transactions", (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding);
+  }
+
+  const decodedToken = atob(base64Url);
+
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(401).json({ error: "Невалиден токен" });
+
+    const userId = decoded.id;
+
+    db.deleteTransactionsByUserId(userId, (err) => {
+      if (err) return res.status(500).json({ error: "Грешка в базата данни" });
+
+      res.json({ message: "Всички транзакции са изтрити успешно" });
+    });
+  });
+});
+
 app.listen(5000, () => {
-  console.log("Server started on http://localhost:5000");
+  console.log("Сървърът е стартиран на http://localhost:5000");
 });

@@ -1,10 +1,9 @@
-// database.js
 const mysql = require("mysql2");
 
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "", // Default password for XAMPP
+  password: "",
   database: "teenbudget"
 });
 
@@ -13,7 +12,7 @@ db.connect((err) => {
   console.log("MySQL Connected...");
 });
 
-// Helper functions
+// Функции за потребители
 const checkEmailExists = (email, callback) => {
   const query = "SELECT * FROM users WHERE email = ?";
   db.query(query, [email], callback);
@@ -41,10 +40,44 @@ const getUserById = (userId, callback) => {
   db.query(query, [userId], callback);
 };
 
+// Функции за транзакции
+const createTransaction = (
+  userId,
+  type,
+  amount,
+  category,
+  description,
+  date,
+  callback
+) => {
+  const query =
+    "INSERT INTO transactions (user_id, type, amount, category, description, date) VALUES (?, ?, ?, ?, ?, ?)";
+  db.query(
+    query,
+    [userId, type, amount, category, description, date],
+    callback
+  );
+};
+
+const getTransactionsByUserId = (userId, callback) => {
+  const query =
+    "SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC";
+  db.query(query, [userId], callback);
+};
+
+const deleteTransactionsByUserId = (userId, callback) => {
+  const query = "DELETE FROM transactions WHERE user_id = ?";
+  db.query(query, [userId], callback);
+};
+
 module.exports = {
+  db,
   checkEmailExists,
   createUser,
   findUserByEmail,
   updateUserPassword,
-  getUserById
+  getUserById,
+  createTransaction,
+  getTransactionsByUserId,
+  deleteTransactionsByUserId
 };
