@@ -58,7 +58,7 @@ const StatisticsCards = ({
           Приходи
         </h3>
         <p className="text-3xl font-bold text-emerald-500">
-          {totalIncome.toFixed(2)} лв.
+          {totalIncome.toFixed(2) || 'N/A'} лв.
         </p>
         <p
           className={`text-sm mt-2 ${
@@ -82,7 +82,7 @@ const StatisticsCards = ({
           Разходи
         </h3>
         <p className="text-3xl font-bold text-red-500">
-          {totalExpense.toFixed(2)} лв.
+          {totalExpense.toFixed(2) || 'N/A'} лв.
         </p>
         <p
           className={`text-sm mt-2 ${
