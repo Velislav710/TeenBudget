@@ -50,10 +50,7 @@ const TransactionCharts = ({
     },
     tooltip: {
       y: {
-        formatter: (value: number) => {
-          console.log('value: ', value);
-          return `${value.toFixed(2)} лв.`;
-        },
+        formatter: (value: number) => `${value.toFixed(2)} лв.`,
       },
     },
   };
