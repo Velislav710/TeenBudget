@@ -26,9 +26,7 @@ const TransactionCharts = ({
       foreColor: isDarkMode ? '#fff' : '#000',
     },
     colors: ['#10b981', '#ef4444'],
-    theme: {
-      mode: isDarkMode ? 'dark' : 'light',
-    },
+    mode: (isDarkMode ? 'dark' : 'light') as 'dark' | 'light',
     stroke: {
       curve: 'smooth' as const,
       width: 3,
