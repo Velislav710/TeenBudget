@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["vite/client"],
     "module": "ESNext",
     "skipLibCheck": true,
 
@@ -19,6 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["app/src", "app/src/lib.d.ts"],
+  "include": ["app/src", "vite-env.d.ts", "app/src/lib.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
