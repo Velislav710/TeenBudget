@@ -141,8 +141,8 @@ const SignUpPage = () => {
       <div
         className={`min-h-screen ${
           isDarkMode
-            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
-            : 'bg-gradient-to-r from-emerald-400 to-amber-400'
+            ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900'
+            : 'bg-gradient-to-r from-blue-400 to-blue-300'
         } flex flex-col`}
       >
         <div className="absolute top-4 right-4">
@@ -153,27 +153,27 @@ const SignUpPage = () => {
           <form
             onSubmit={handleSignUp}
             className={`w-full max-w-md ${
-              isDarkMode ? 'bg-gray-800/90' : 'bg-white/95'
+              isDarkMode ? 'bg-gray-800/90' : 'bg-white/90'
             } rounded-2xl shadow-2xl p-10 backdrop-blur-sm`}
           >
             <div className="mb-10 text-center">
               <h1
                 className={`text-4xl font-bold ${
-                  isDarkMode ? 'text-white' : 'text-amber-950'
+                  isDarkMode ? 'text-white' : 'text-blue-950'
                 }`}
               >
-                Създаване на акаунт
+                Създайте акаунт
               </h1>
               <p
                 className={`mt-3 text-lg ${
-                  isDarkMode ? 'text-gray-300' : 'text-amber-900'
+                  isDarkMode ? 'text-gray-300' : 'text-blue-900'
                 }`}
               >
-                Присъединете се към нашата общност
+                Въведете вашите данни, за да се регистрирате
               </p>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-6">
               <div>
                 <label
                   className={`text-base font-semibold block mb-2 ${
@@ -213,7 +213,7 @@ const SignUpPage = () => {
                 />
                 {errors.email && (
                   <p className="mt-2 text-sm font-medium text-red-500">
-                    Моля, въведете вашия имейл
+                    Моля, въведете валиден имейл
                   </p>
                 )}
               </div>
@@ -221,7 +221,7 @@ const SignUpPage = () => {
               <div>
                 <label
                   className={`text-base font-semibold block mb-2 ${
-                    isDarkMode ? 'text-gray-200' : 'text-amber-900'
+                    isDarkMode ? 'text-gray-200' : 'text-blue-900'
                   }`}
                 >
                   Парола
@@ -232,7 +232,7 @@ const SignUpPage = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className={inputClasses(errors.password)}
-                    placeholder="Въведете парола"
+                    placeholder="Въведете вашата парола"
                   />
                   <button
                     type="button"
@@ -240,7 +240,7 @@ const SignUpPage = () => {
                     className={`absolute right-3 top-1/2 -translate-y-1/2 ${
                       isDarkMode
                         ? 'text-gray-400 hover:text-gray-300'
-                        : 'text-amber-700 hover:text-amber-800'
+                        : 'text-blue-700 hover:text-blue-800'
                     }`}
                   >
                     {showPassword ? (
@@ -291,7 +291,7 @@ const SignUpPage = () => {
               <div>
                 <label
                   className={`text-base font-semibold block mb-2 ${
-                    isDarkMode ? 'text-gray-200' : 'text-amber-900'
+                    isDarkMode ? 'text-gray-200' : 'text-blue-900'
                   }`}
                 >
                   Потвърдете паролата
@@ -361,11 +361,11 @@ const SignUpPage = () => {
                 type="submit"
                 className={`w-full ${
                   isDarkMode
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-emerald-500 hover:bg-emerald-600'
-                } text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 text-lg shadow-xl mt-6`}
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                } text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 text-lg shadow-xl`}
               >
-                Създай акаунт
+                Регистрирай се
               </button>
 
               <div className="text-center mt-6">
@@ -373,11 +373,11 @@ const SignUpPage = () => {
                   to="/login"
                   className={`font-bold text-lg ${
                     isDarkMode
-                      ? 'text-emerald-400 hover:text-emerald-300'
-                      : 'text-emerald-700 hover:text-emerald-800'
+                      ? 'text-blue-400 hover:text-blue-300'
+                      : 'text-blue-700 hover:text-blue-800'
                   }`}
                 >
-                  Вече имате акаунт? Влезте
+                  Вече имате акаунт? Влезте тук
                 </Link>
               </div>
             </div>
