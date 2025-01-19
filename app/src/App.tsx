@@ -10,6 +10,7 @@ import VerifyPage from './pagess/authentication/VerifyPage';
 import ForgotPassword from './pagess/authentication/ForgotPassword';
 import Resetbasic from './pagess/authentication/Resetbasic';
 import Contact from './pagess/contact/Contact';
+import BudgetPlanning from './pagess/home/BudgetPlanning';
 
 const App = () => {
   return (
@@ -31,6 +32,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <ECommerce />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/budget-planning"
+          element={
+            <ProtectedRoute>
+              <BudgetPlanning />
             </ProtectedRoute>
           }
         />

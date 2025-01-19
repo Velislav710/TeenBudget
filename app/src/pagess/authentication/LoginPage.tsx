@@ -9,6 +9,8 @@ interface LoginErrors {
   password: boolean;
 }
 
+const API_BASE_URL =
+  (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3000';
 const LoginPage = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
@@ -39,18 +41,19 @@ const LoginPage = () => {
 
     if (!validationErrors.email && !validationErrors.password) {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/signin`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email.trim(), password, rememberMe }),
-          },
-        );
+        const response = await fetch(`${API_BASE_URL}/signin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim(), password, rememberMe }),
+        });
 
         const data = await response.json();
         if (data.token) {
-          localStorage.setItem('authToken', data.token);
+          if (rememberMe) {
+            localStorage.setItem('authToken', data.token);
+          } else {
+            sessionStorage.setItem('authToken', data.token);
+          }
           navigate('/main');
         } else {
           throw new Error(data.message || 'Невалидни данни за вход');
@@ -69,16 +72,13 @@ const LoginPage = () => {
 
       if (token) {
         try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/token-validation`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ token }),
+          const response = await fetch(`${API_BASE_URL}/token-validation`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
             },
-          );
+            body: JSON.stringify({ token }),
+          });
 
           if (!response.ok) {
             throw new Error('Token validation failed');
@@ -87,9 +87,8 @@ const LoginPage = () => {
           const result = await response.json();
 
           if (result.valid) {
-            navigate(`/main`);
+            navigate('/main');
           } else {
-            console.log('Invalid token');
             localStorage.removeItem('authToken');
             sessionStorage.removeItem('authToken');
             navigate('/login');
@@ -98,8 +97,6 @@ const LoginPage = () => {
           console.error('Error validating token:', error);
           navigate('/login');
         }
-      } else {
-        navigate('/login');
       }
     };
 
@@ -248,7 +245,7 @@ const LoginPage = () => {
                 )}
               </div>
 
-              <div className="flex items-center">
+              <div className="flex items-center justify-between">
                 <label
                   className={`flex items-center cursor-pointer group ${
                     isDarkMode ? 'text-gray-200' : 'text-blue-900'

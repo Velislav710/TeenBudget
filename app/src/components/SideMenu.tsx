@@ -34,7 +34,7 @@ const SideMenu = () => {
     },
     {
       title: 'Планиране на бюджет',
-      path: '/budget-planning',
+      path: '/home/budget-planning',
       icon: (
         <svg
           className="w-6 h-6"
