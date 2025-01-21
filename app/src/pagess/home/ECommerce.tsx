@@ -5,6 +5,7 @@ import ThemeToggle from '../../components/ThemeToggle';
 import ApexCharts from 'react-apexcharts';
 import SideMenu from '../../components/SideMenu';
 import Footer from '../../components/Footerr/Footer';
+import { fetchOpenAIResponse } from './helper-functions';
 
 const categories = {
   income: ['Джобни', 'Подарък', 'Стипендия', 'Работа', 'Спестявания', 'Други'],
@@ -227,6 +228,31 @@ const ECommerce = () => {
                 title="Изход от профила"
               >
                 Изход
+              </button>
+            </div>
+            <div className="mb-8">
+              <button
+                onClick={async () => {
+                  const analysisData = {
+                    totalIncome,
+                    totalExpense,
+                    totalBalance: balance,
+                    savingsRate,
+                    transactions: transactions.slice(0, 10),
+                  };
+
+                  const aiResponse = await fetchOpenAIResponse(analysisData);
+                  if (aiResponse) {
+                    alert(JSON.stringify(aiResponse.analysis, null, 2));
+                  }
+                }}
+                className={`px-6 py-2 rounded-md ${
+                  isDarkMode
+                    ? 'bg-violet-500/90 hover:bg-violet-600/90'
+                    : 'bg-violet-400/90 hover:bg-violet-500/90'
+                } text-white transition-all duration-200`}
+              >
+                Анализирай с AI
               </button>
             </div>
           </header>
