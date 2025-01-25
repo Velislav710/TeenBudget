@@ -37,6 +37,14 @@ interface FormErrors {
   description: string;
 }
 
+interface AIAnalysis {
+  summary: string;
+  recommendations: string[];
+  savingsPotential: string;
+  monthlyTrend: string;
+  topCategory: string;
+}
+
 const ECommerce = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
@@ -47,6 +55,7 @@ const ECommerce = () => {
     category: '',
     description: '',
   });
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
 
   const [newTransaction, setNewTransaction] = useState({
     type: 'income' as const,
@@ -55,7 +64,6 @@ const ECommerce = () => {
     description: '',
   });
 
-  // Функция за форматиране на дата
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('bg-BG', {
@@ -65,7 +73,6 @@ const ECommerce = () => {
     });
   };
 
-  // Зареждане на транзакции
   useEffect(() => {
     const loadTransactions = async () => {
       try {
@@ -97,7 +104,6 @@ const ECommerce = () => {
     loadTransactions();
   }, [navigate]);
 
-  // Изчисляване на финансови показатели
   const totalIncome = transactions
     .filter((t) => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
@@ -112,7 +118,21 @@ const ECommerce = () => {
       ? (((totalIncome - totalExpense) / totalIncome) * 100).toFixed(1)
       : '0';
 
-  // Валидация на форма
+  const handleAIAnalysis = async () => {
+    const analysisData = {
+      totalIncome,
+      totalExpense,
+      totalBalance: balance,
+      savingsRate,
+      transactions: transactions.slice(0, 10),
+    };
+
+    const aiResponse = await fetchOpenAIResponse(analysisData);
+    if (aiResponse?.analysis) {
+      setAiAnalysis(aiResponse.analysis);
+    }
+  };
+
   const validateForm = () => {
     const errors: FormErrors = {
       amount: '',
@@ -138,7 +158,6 @@ const ECommerce = () => {
     return !Object.values(errors).some((error) => error !== '');
   };
 
-  // Добавяне на транзакция
   const handleAddTransaction = async () => {
     if (!validateForm()) return;
 
@@ -182,7 +201,6 @@ const ECommerce = () => {
     }
   };
 
-  // Изход от профила
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     sessionStorage.removeItem('authToken');
@@ -200,7 +218,6 @@ const ECommerce = () => {
       <SideMenu />
       <div className="ml-64">
         <div className="max-w-7xl mx-auto">
-          {/* Хедър */}
           <header
             className={`fixed top-0 right-0 left-64 z-10 ${
               isDarkMode ? 'bg-slate-800/95' : 'bg-white/95'
@@ -217,7 +234,6 @@ const ECommerce = () => {
                 </h1>
                 <ThemeToggle />
               </div>
-
               <button
                 onClick={handleLogout}
                 className={`px-6 py-2 rounded-md ${
@@ -230,36 +246,9 @@ const ECommerce = () => {
                 Изход
               </button>
             </div>
-            <div className="mb-8">
-              <button
-                onClick={async () => {
-                  const analysisData = {
-                    totalIncome,
-                    totalExpense,
-                    totalBalance: balance,
-                    savingsRate,
-                    transactions: transactions.slice(0, 10),
-                  };
-
-                  const aiResponse = await fetchOpenAIResponse(analysisData);
-                  if (aiResponse) {
-                    alert(JSON.stringify(aiResponse.analysis, null, 2));
-                  }
-                }}
-                className={`px-6 py-2 rounded-md ${
-                  isDarkMode
-                    ? 'bg-violet-500/90 hover:bg-violet-600/90'
-                    : 'bg-violet-400/90 hover:bg-violet-500/90'
-                } text-white transition-all duration-200`}
-              >
-                Анализирай с AI
-              </button>
-            </div>
           </header>
 
-          {/* Основно съдържание */}
           <main className="pt-20 px-8 pb-8">
-            {/* Информативно съобщение */}
             <div
               className={`mb-8 p-4 rounded-lg ${
                 isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
@@ -272,7 +261,6 @@ const ECommerce = () => {
               </p>
             </div>
 
-            {/* Финансови показатели */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <div
                 className={`p-6 rounded-lg ${
@@ -325,6 +313,161 @@ const ECommerce = () => {
               </div>
             </div>
 
+            <div
+              className={`p-6 rounded-lg ${
+                isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
+              } backdrop-blur-sm shadow-sm mb-8`}
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold mb-2">
+                    Твоят AI Финансов Помощник
+                  </h2>
+                  <p
+                    className={`${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                    }`}
+                  >
+                    Получи персонализиран анализ на твоя бюджет и умни съвети за
+                    по-добро управление на финансите
+                  </p>
+                </div>
+                <button
+                  onClick={handleAIAnalysis}
+                  className={`px-6 py-3 rounded-full ${
+                    isDarkMode
+                      ? 'bg-violet-500/90 hover:bg-violet-600/90'
+                      : 'bg-violet-400/90 hover:bg-violet-500/90'
+                  } text-white transition-all duration-200 flex items-center gap-2`}
+                >
+                  <span className="material-icons">psychology</span>
+                  Анализирай моя бюджет
+                </button>
+              </div>
+
+              {aiAnalysis && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div
+                    className={`col-span-2 p-6 rounded-lg ${
+                      isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
+                    }`}
+                  >
+                    <h3 className="text-xl font-semibold mb-4">
+                      Твоят финансов профил
+                    </h3>
+                    <p className="text-lg mb-6">{aiAnalysis.summary}</p>
+
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div
+                        className={`p-4 rounded-lg ${
+                          isDarkMode ? 'bg-slate-600/50' : 'bg-white/50'
+                        }`}
+                      >
+                        <h4 className="font-medium mb-2">Месечна тенденция</h4>
+                        <div className="flex items-center gap-2">
+                          <span className="material-icons text-emerald-400">
+                            {aiAnalysis.monthlyTrend.includes('повече')
+                              ? 'trending_up'
+                              : 'trending_down'}
+                          </span>
+                          <span>{aiAnalysis.monthlyTrend}</span>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`p-4 rounded-lg ${
+                          isDarkMode ? 'bg-slate-600/50' : 'bg-white/50'
+                        }`}
+                      >
+                        <h4 className="font-medium mb-2">Топ категория</h4>
+                        <div className="flex items-center gap-2">
+                          <span className="material-icons text-sky-400">
+                            category
+                          </span>
+                          <span>{aiAnalysis.topCategory}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <h4 className="font-semibold mb-3">
+                      Персонализирани препоръки
+                    </h4>
+                    <ul className="space-y-3">
+                      {aiAnalysis.recommendations.map((rec, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <span className="material-icons text-violet-400">
+                            tips_and_updates
+                          </span>
+                          <span>{rec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div
+                    className={`p-6 rounded-lg ${
+                      isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
+                    }`}
+                  >
+                    <h3 className="text-xl font-semibold mb-4">
+                      Потенциал за спестяване
+                    </h3>
+                    <ApexCharts
+                      options={{
+                        chart: {
+                          type: 'radialBar',
+                          background: 'transparent',
+                        },
+                        plotOptions: {
+                          radialBar: {
+                            startAngle: -135,
+                            endAngle: 135,
+                            hollow: {
+                              size: '70%',
+                            },
+                            track: {
+                              background: isDarkMode ? '#475569' : '#E2E8F0',
+                            },
+                            dataLabels: {
+                              name: {
+                                show: true,
+                                color: isDarkMode ? '#E2E8F0' : '#334155',
+                                fontSize: '16px',
+                              },
+                              value: {
+                                formatter: function (val) {
+                                  return val + '%';
+                                },
+                                color: isDarkMode ? '#E2E8F0' : '#334155',
+                                fontSize: '24px',
+                                fontWeight: 600,
+                              },
+                            },
+                          },
+                        },
+                        fill: {
+                          type: 'gradient',
+                          gradient: {
+                            shade: 'dark',
+                            type: 'horizontal',
+                            shadeIntensity: 0.5,
+                            gradientToColors: ['#38BDF8'],
+                            stops: [0, 100],
+                          },
+                        },
+                        stroke: {
+                          lineCap: 'round',
+                        },
+                        labels: ['Потенциал'],
+                      }}
+                      series={[parseFloat(aiAnalysis.savingsPotential)]}
+                      type="radialBar"
+                      height={300}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
             {/* Форма за добавяне на транзакция */}
             <div
               className={`p-6 rounded-lg ${
@@ -505,24 +648,24 @@ const ECommerce = () => {
                     colors:
                       chartType === 'expense'
                         ? [
-                            '#FDA4AF',
-                            '#FB7185',
-                            '#F43F5E',
-                            '#E11D48',
-                            '#BE123C',
-                            '#9F1239',
-                            '#881337',
-                            '#770C2D',
+                            '#FED7D7',
+                            '#FEB2B2',
+                            '#FC8181',
+                            '#F56565',
+                            '#E53E3E',
+                            '#C53030',
+                            '#9B2C2C',
+                            '#822727',
                           ]
                         : [
-                            '#6EE7B7',
-                            '#34D399',
-                            '#10B981',
-                            '#059669',
-                            '#047857',
-                            '#065F46',
-                            '#064E3B',
-                            '#053F2F',
+                            '#C6F6D5',
+                            '#9AE6B4',
+                            '#68D391',
+                            '#48BB78',
+                            '#38A169',
+                            '#2F855A',
+                            '#276749',
+                            '#22543D',
                           ],
                     legend: {
                       position: 'bottom',
