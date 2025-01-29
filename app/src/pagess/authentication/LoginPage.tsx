@@ -9,20 +9,14 @@ interface LoginErrors {
   password: boolean;
 }
 
-const API_BASE_URL =
-  (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3000';
-const LoginPage = () => {
+const LoginPage = ({ setIsAuthenticated }: { setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>> }) => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [errors, setErrors] = useState<LoginErrors>({
-    email: false,
-    password: false,
-  });
+  const [errors, setErrors] = useState<LoginErrors>({ email: false, password: false });
 
   const isValidEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,28 +26,30 @@ const LoginPage = () => {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const validationErrors = {
-      email: !email || !isValidEmail(email),
-      password: !password,
+    const newErrors = { 
+      email: !email || !isValidEmail(email), 
+      password: !password || password.length < 6 
     };
 
-    setErrors(validationErrors);
+    setErrors(newErrors);
 
-    if (!validationErrors.email && !validationErrors.password) {
+    if (!newErrors.email && !newErrors.password) {
       try {
-        const response = await fetch(`${API_BASE_URL}/signin`, {
+        const formData = new FormData();
+        formData.append('email', email.trim());
+        formData.append('password', password);
+        formData.append('rememberMe', rememberMe.toString());
+
+        const response = await fetch('http://localhost/teenbudget/login.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), password, rememberMe }),
+          body: formData
         });
 
         const data = await response.json();
-        if (data.token) {
-          if (rememberMe) {
-            localStorage.setItem('authToken', data.token);
-          } else {
-            sessionStorage.setItem('authToken', data.token);
-          }
+
+        if (data.success) {
+          localStorage.setItem('authToken', data.token);
+          setIsAuthenticated(true);
           navigate('/main');
         } else {
           throw new Error(data.message || 'Невалидни данни за вход');
@@ -64,260 +60,109 @@ const LoginPage = () => {
     }
   };
 
-  React.useEffect(() => {
-    const checkTokenValidity = async () => {
-      const token =
-        localStorage.getItem('authToken') ||
-        sessionStorage.getItem('authToken');
-
-      if (token) {
-        try {
-          const response = await fetch(`${API_BASE_URL}/token-validation`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ token }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Token validation failed');
-          }
-
-          const result = await response.json();
-
-          if (result.valid) {
-            navigate('/main');
-          } else {
-            localStorage.removeItem('authToken');
-            sessionStorage.removeItem('authToken');
-            navigate('/login');
-          }
-        } catch (error) {
-          console.error('Error validating token:', error);
-          navigate('/login');
-        }
-      }
-    };
-
-    checkTokenValidity();
-  }, [navigate]);
-
   const inputClasses = (error: boolean) => `
-    w-full px-4 py-3 rounded-xl text-lg transition-all duration-300
-    ${
-      isDarkMode
-        ? error
-          ? 'bg-red-900/20 border-2 border-red-500 text-white placeholder-red-400'
-          : 'bg-gray-700/50 border-2 border-gray-600 text-white placeholder-gray-400 focus:border-emerald-500'
-        : error
-        ? 'bg-red-50 border-2 border-red-500 text-red-900 placeholder-red-400'
-        : 'bg-white border-2 border-amber-300 text-amber-900 placeholder-amber-400 focus:border-emerald-500'
+    w-full px-5 py-4 rounded-md text-lg border-2 transition-all duration-200
+    ${isDarkMode
+      ? error
+        ? 'bg-red-700 border-red-500 text-white'
+        : 'bg-gray-800 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500'
+      : error
+        ? 'bg-red-100 border-red-500 text-red-900'
+        : 'bg-white border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500'
     }
   `;
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      <div
-        className={`min-h-screen ${
-          isDarkMode
-            ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900'
-            : 'bg-gradient-to-r from-blue-400 to-blue-300'
-        } flex flex-col`}
-      >
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-r from-gray-900 to-gray-700' : 'bg-gradient-to-r from-blue-400 to-blue-300'} flex flex-col justify-center items-center`}>
         <div className="absolute top-4 right-4">
           <ThemeToggle />
         </div>
 
-        <div className="flex-grow flex items-center justify-center p-6">
-          <form
-            onSubmit={handleLogin}
-            className={`w-full max-w-md ${
-              isDarkMode ? 'bg-gray-800/90' : 'bg-white/90'
-            } rounded-2xl shadow-2xl p-10 backdrop-blur-sm`}
-          >
-            <div className="mb-10 text-center">
-              <h1
-                className={`text-4xl font-bold ${
-                  isDarkMode ? 'text-white' : 'text-blue-950'
-                }`}
-              >
-                Добре дошли отново
-              </h1>
-              <p
-                className={`mt-3 text-lg ${
-                  isDarkMode ? 'text-gray-300' : 'text-blue-900'
-                }`}
-              >
-                Въведете вашите данни за достъп
-              </p>
+        <div className="w-full max-w-md p-8 bg-white/80 rounded-lg shadow-lg backdrop-blur-sm">
+          <h1 className={`text-3xl font-semibold text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Влезте в акаунта си
+          </h1>
+          <p className={`mt-3 text-lg text-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Моля, въведете имейл и парола, за да продължите.
+          </p>
+
+          <form onSubmit={handleLogin} className="mt-6 space-y-6">
+            <div>
+              <label className={`block text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                Вашият имейл
+              </label>
+              <input 
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={inputClasses(errors.email)}
+                placeholder="Въведете вашия имейл"
+              />
+              {errors.email && (
+                <p className="mt-2 text-sm font-medium text-red-500">
+                  Невалиден имейл адрес. Моля, опитайте отново.
+                </p>
+              )}
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <label
-                  className={`text-base font-semibold block mb-2 ${
-                    isDarkMode ? 'text-gray-200' : 'text-blue-900'
-                  }`}
-                >
-                  Имейл
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={inputClasses(errors.email)}
-                  placeholder="Въведете вашия имейл"
+            <div>
+              <label className={`block text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                Парола
+              </label>
+              <div className="relative">
+                <input 
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={inputClasses(errors.password)}
+                  placeholder="Вашата парола"
                 />
-                {errors.email && (
-                  <p className="mt-2 text-sm font-medium text-red-500">
-                    Моля, въведете валиден имейл
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  className={`text-base font-semibold block mb-2 ${
-                    isDarkMode ? 'text-gray-200' : 'text-blue-900'
-                  }`}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
                 >
-                  Парола
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={inputClasses(errors.password)}
-                    placeholder="Въведете вашата парола"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${
-                      isDarkMode
-                        ? 'text-gray-400 hover:text-gray-300'
-                        : 'text-blue-700 hover:text-blue-800'
-                    }`}
-                  >
-                    {showPassword ? (
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="mt-2 text-sm font-medium text-red-500">
-                    Паролата трябва да е поне 6 символа
-                  </p>
-                )}
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
               </div>
-
-              <div className="flex items-center justify-between">
-                <label
-                  className={`flex items-center cursor-pointer group ${
-                    isDarkMode ? 'text-gray-200' : 'text-blue-900'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="sr-only"
-                  />
-                  <div
-                    className={`w-5 h-5 border-2 rounded transition-all flex items-center justify-center ${
-                      rememberMe
-                        ? 'bg-emerald-600 border-emerald-600'
-                        : 'border-blue-300'
-                    }`}
-                  >
-                    {rememberMe && (
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path d="M5 13l4 4L19 7"></path>
-                      </svg>
-                    )}
-                  </div>
-                  <span className="ml-2 font-medium">Запомни ме</span>
-                </label>
-                <Link
-                  to="/forgot-password"
-                  className={`font-medium ${
-                    isDarkMode
-                      ? 'text-emerald-400 hover:text-emerald-300'
-                      : 'text-emerald-600 hover:text-emerald-700'
-                  } transition-colors`}
-                >
-                  Забравена парола?
-                </Link>
-              </div>
-
-              <button
-                type="submit"
-                className={`w-full ${
-                  isDarkMode
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-blue-500 hover:bg-blue-600'
-                } text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 text-lg shadow-xl`}
-              >
-                Вход
-              </button>
-
-              <div className="text-center mt-6">
-                <Link
-                  to="/signup"
-                  className={`font-bold text-lg ${
-                    isDarkMode
-                      ? 'text-blue-400 hover:text-blue-300'
-                      : 'text-blue-700 hover:text-blue-800'
-                  }`}
-                >
-                  Нямате акаунт? Регистрирайте се
-                </Link>
-              </div>
+              {errors.password && (
+                <p className="mt-2 text-sm font-medium text-red-500">
+                  Паролата трябва да съдържа минимум 6 символа.
+                </p>
+              )}
             </div>
+
+            <div className="flex items-center justify-between">
+              <label className={`flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="mr-2"
+                />
+                Запомни ме за следващия път
+              </label>
+            </div>
+
+            <button 
+              type="submit"
+              className={`w-full py-3 rounded-md text-white font-semibold bg-blue-600 ${isDarkMode ? 'hover:bg-blue-500' : 'hover:bg-blue-700'}`}
+            >
+              Влез
+            </button>
           </form>
+
+          <div className="mt-6 text-center">
+            <Link 
+              to="/signup" 
+              className={`text-sm font-semibold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
+            >
+              Нямате акаунт? Регистрирайте се тук.
+            </Link>
+          </div>
         </div>
+        
         <Footer />
       </div>
     </div>
