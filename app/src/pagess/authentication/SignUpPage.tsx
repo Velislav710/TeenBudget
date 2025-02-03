@@ -4,169 +4,389 @@ import Footer from '../../components/Footerr/Footer';
 import { useTheme } from '../../context/ThemeContext';
 import ThemeToggle from '../../components/ThemeToggle';
 
-interface LoginErrors {
-  email: boolean;
-  password: boolean;
-}
-
-const LoginPage = ({ setIsAuthenticated }: { setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>> }) => {
+const SignUpPage = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [errors, setErrors] = useState<LoginErrors>({ email: false, password: false });
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState({
+    name: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  });
 
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  const passwordStrengthRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const newErrors = { 
-      email: !email || !isValidEmail(email), 
-      password: !password || password.length < 6 
+    const newErrors = {
+      name: !name,
+      email: !email,
+      password: !password || !passwordStrengthRegex.test(password),
+      confirmPassword: !confirmPassword || password !== confirmPassword,
     };
 
     setErrors(newErrors);
 
-    if (!newErrors.email && !newErrors.password) {
+    if (!Object.values(newErrors).includes(true)) {
       try {
-        const formData = new FormData();
-        formData.append('email', email.trim());
-        formData.append('password', password);
-        formData.append('rememberMe', rememberMe.toString());
+        const nameParts = name.trim().split(' ');
+        const firstName = nameParts[0];
+        const lastName =
+          nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
-        const response = await fetch('http://localhost/teenbudget/login.php', {
-          method: 'POST',
-          body: formData
+        const body = JSON.stringify({
+          firstName,
+          lastName,
+          email: email.trim(),
+          password,
         });
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/signup`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body,
+          },
+        );
 
         const data = await response.json();
 
-        if (data.success) {
-          localStorage.setItem('authToken', data.token);
-          setIsAuthenticated(true);
-          navigate('/main');
+        if (response.ok) {
+          alert(
+            data.message || 'Кодът за потвърждение е изпратен на вашия имейл!',
+          );
+          navigate('/verify', {
+            state: { email: email },
+          });
         } else {
-          throw new Error(data.message || 'Невалидни данни за вход');
+          throw new Error(data.error || 'Грешка при регистрация');
         }
       } catch (error: any) {
-        alert(error.message || 'Възникна грешка при влизането');
+        alert(error.message || 'Възникна неочаквана грешка');
       }
     }
   };
 
+  React.useEffect(() => {
+    const checkTokenValidity = async () => {
+      const token =
+        localStorage.getItem('authToken') ||
+        sessionStorage.getItem('authToken');
+
+      if (token) {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/token-validation`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ token }),
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error('Token validation failed');
+          }
+
+          const result = await response.json();
+
+          if (result.valid) {
+            navigate(`/main`);
+          } else {
+            console.log('Invalid token');
+            localStorage.removeItem('authToken');
+            sessionStorage.removeItem('authToken');
+            navigate('/signup');
+          }
+        } catch (error) {
+          console.error('Error validating token:', error);
+          navigate('/signup');
+        }
+      } else {
+        navigate('/signup');
+      }
+    };
+
+    checkTokenValidity();
+  }, [navigate]);
+
   const inputClasses = (error: boolean) => `
-    w-full px-5 py-4 rounded-md text-lg border-2 transition-all duration-200
-    ${isDarkMode
-      ? error
-        ? 'bg-red-700 border-red-500 text-white'
-        : 'bg-gray-800 border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500'
-      : error
-        ? 'bg-red-100 border-red-500 text-red-900'
-        : 'bg-white border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500'
+    w-full px-4 py-3 rounded-xl text-lg transition-all duration-300
+    ${
+      isDarkMode
+        ? error
+          ? 'bg-red-900/20 border-2 border-red-500 text-white placeholder-red-400'
+          : 'bg-gray-700/50 border-2 border-gray-600 text-white placeholder-gray-400 focus:border-emerald-500'
+        : error
+        ? 'bg-red-50 border-2 border-red-500 text-red-900 placeholder-red-400'
+        : 'bg-white border-2 border-amber-300 text-amber-900 placeholder-amber-400 focus:border-emerald-500'
     }
   `;
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-r from-gray-900 to-gray-700' : 'bg-gradient-to-r from-blue-400 to-blue-300'} flex flex-col justify-center items-center`}>
+      <div
+        className={`min-h-screen ${
+          isDarkMode
+            ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900'
+            : 'bg-gradient-to-r from-blue-400 to-blue-300'
+        } flex flex-col`}
+      >
         <div className="absolute top-4 right-4">
           <ThemeToggle />
         </div>
 
-        <div className="w-full max-w-md p-8 bg-white/80 rounded-lg shadow-lg backdrop-blur-sm">
-          <h1 className={`text-3xl font-semibold text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Влезте в акаунта си
-          </h1>
-          <p className={`mt-3 text-lg text-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            Моля, въведете имейл и парола, за да продължите.
-          </p>
-
-          <form onSubmit={handleLogin} className="mt-6 space-y-6">
-            <div>
-              <label className={`block text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                Вашият имейл
-              </label>
-              <input 
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={inputClasses(errors.email)}
-                placeholder="Въведете вашия имейл"
-              />
-              {errors.email && (
-                <p className="mt-2 text-sm font-medium text-red-500">
-                  Невалиден имейл адрес. Моля, опитайте отново.
-                </p>
-              )}
+        <div className="flex-grow flex items-center justify-center p-6">
+          <form
+            onSubmit={handleSignUp}
+            className={`w-full max-w-md ${
+              isDarkMode ? 'bg-gray-800/90' : 'bg-white/90'
+            } rounded-2xl shadow-2xl p-10 backdrop-blur-sm`}
+          >
+            <div className="mb-10 text-center">
+              <h1
+                className={`text-4xl font-bold ${
+                  isDarkMode ? 'text-white' : 'text-blue-950'
+                }`}
+              >
+                Създайте акаунт
+              </h1>
+              <p
+                className={`mt-3 text-lg ${
+                  isDarkMode ? 'text-gray-300' : 'text-blue-900'
+                }`}
+              >
+                Въведете вашите данни, за да се регистрирате
+              </p>
             </div>
 
-            <div>
-              <label className={`block text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                Парола
-              </label>
-              <div className="relative">
-                <input 
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={inputClasses(errors.password)}
-                  placeholder="Вашата парола"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+            <div className="space-y-6">
+              <div>
+                <label
+                  className={`text-base font-semibold block mb-2 ${
+                    isDarkMode ? 'text-gray-200' : 'text-amber-900'
+                  }`}
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-2 text-sm font-medium text-red-500">
-                  Паролата трябва да съдържа минимум 6 символа.
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className={`flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                  Име и фамилия
+                </label>
                 <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="mr-2"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={inputClasses(errors.name)}
+                  placeholder="Въведете вашето име"
                 />
-                Запомни ме за следващия път
-              </label>
+                {errors.name && (
+                  <p className="mt-2 text-sm font-medium text-red-500">
+                    Моля, въведете вашето име
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  className={`text-base font-semibold block mb-2 ${
+                    isDarkMode ? 'text-gray-200' : 'text-amber-900'
+                  }`}
+                >
+                  Имейл
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inputClasses(errors.email)}
+                  placeholder="Въведете вашия имейл"
+                />
+                {errors.email && (
+                  <p className="mt-2 text-sm font-medium text-red-500">
+                    Моля, въведете валиден имейл
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  className={`text-base font-semibold block mb-2 ${
+                    isDarkMode ? 'text-gray-200' : 'text-blue-900'
+                  }`}
+                >
+                  Парола
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={inputClasses(errors.password)}
+                    placeholder="Въведете вашата парола"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+                      isDarkMode
+                        ? 'text-gray-400 hover:text-gray-300'
+                        : 'text-blue-700 hover:text-blue-800'
+                    }`}
+                  >
+                    {showPassword ? (
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="mt-2 text-sm font-medium text-red-500">
+                    Паролата трябва да съдържа поне 8 символа, една главна
+                    буква, една малка буква, една цифра и един специален символ
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  className={`text-base font-semibold block mb-2 ${
+                    isDarkMode ? 'text-gray-200' : 'text-blue-900'
+                  }`}
+                >
+                  Потвърдете паролата
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={inputClasses(errors.confirmPassword)}
+                    placeholder="Потвърдете паролата"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+                      isDarkMode
+                        ? 'text-gray-400 hover:text-gray-300'
+                        : 'text-amber-700 hover:text-amber-800'
+                    }`}
+                  >
+                    {showConfirmPassword ? (
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="mt-2 text-sm font-medium text-red-500">
+                    Паролите не съвпадат
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className={`w-full ${
+                  isDarkMode
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                } text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 text-lg shadow-xl`}
+              >
+                Регистрирай се
+              </button>
+
+              <div className="text-center mt-6">
+                <Link
+                  to="/login"
+                  className={`font-bold text-lg ${
+                    isDarkMode
+                      ? 'text-blue-400 hover:text-blue-300'
+                      : 'text-blue-700 hover:text-blue-800'
+                  }`}
+                >
+                  Вече имате акаунт? Влезте тук
+                </Link>
+              </div>
             </div>
-
-            <button 
-              type="submit"
-              className={`w-full py-3 rounded-md text-white font-semibold bg-blue-600 ${isDarkMode ? 'hover:bg-blue-500' : 'hover:bg-blue-700'}`}
-            >
-              Влез
-            </button>
           </form>
-
-          <div className="mt-6 text-center">
-            <Link 
-              to="/signup" 
-              className={`text-sm font-semibold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
-            >
-              Нямате акаунт? Регистрирайте се тук.
-            </Link>
-          </div>
         </div>
-        
         <Footer />
       </div>
     </div>
   );
 };
 
-export default LoginPage;
+export default SignUpPage;
