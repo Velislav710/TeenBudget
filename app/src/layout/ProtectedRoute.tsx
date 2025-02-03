@@ -1,5 +1,5 @@
 import React, { ReactNode, useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import Loader from '../common/Loader';
 
 interface ProtectedRouteProps {
@@ -10,7 +10,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [isValid, setIsValid] = useState<boolean | null>(null);
   const token =
     localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-
+  // Хук за получаване на текущото местоположение (път на URL-то)
+  const location = useLocation();
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
@@ -43,7 +44,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     };
 
     validateToken();
-  }, [token]);
+  }, [location]);
 
   if (isValid === null) {
     return <Loader />;

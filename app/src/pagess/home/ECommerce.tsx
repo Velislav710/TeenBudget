@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -8,7 +8,7 @@ import Footer from '../../components/Footerr/Footer';
 import { fetchOpenAIResponse } from './helper-functions';
 
 const categories = {
-  income: ['Джобни', 'Подарък', 'Стипендия', 'Работа', 'Спестявания', 'Други'],
+  income: ['Джобни', 'Подарък', 'Стипендия', 'Работа', 'Други'],
   expense: [
     'Храна',
     'Транспорт',
@@ -48,6 +48,7 @@ interface AIAnalysis {
 const ECommerce = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
+  const [isLoading, setIsLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [chartType, setChartType] = useState<'income' | 'expense'>('expense');
   const [formErrors, setFormErrors] = useState<FormErrors>({
@@ -56,6 +57,7 @@ const ECommerce = () => {
     description: '',
   });
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   const [newTransaction, setNewTransaction] = useState({
     type: 'income' as const,
@@ -72,9 +74,9 @@ const ECommerce = () => {
       day: 'numeric',
     });
   };
-
   useEffect(() => {
     const loadTransactions = async () => {
+      setIsLoading(true);
       try {
         const token =
           localStorage.getItem('authToken') ||
@@ -91,45 +93,118 @@ const ECommerce = () => {
           },
         });
 
-        if (!response.ok)
+        if (!response.ok) {
           throw new Error('Грешка при зареждане на транзакциите');
+        }
 
         const data = await response.json();
         setTransactions(data.transactions);
       } catch (error) {
         console.error('Error:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadTransactions();
   }, [navigate]);
 
-  const totalIncome = transactions
-    .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
+  const financialMetrics = useMemo(() => {
+    const totalIncome = transactions
+      .filter((t) => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalExpense = transactions
-    .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpense = transactions
+      .filter((t) => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
 
-  const balance = totalIncome - totalExpense;
-  const savingsRate =
-    totalIncome > 0
-      ? (((totalIncome - totalExpense) / totalIncome) * 100).toFixed(1)
-      : '0';
+    const balance = totalIncome - totalExpense;
+    const savingsRate =
+      totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
 
-  const handleAIAnalysis = async () => {
-    const analysisData = {
+    return {
       totalIncome,
       totalExpense,
-      totalBalance: balance,
-      savingsRate,
-      transactions: transactions.slice(0, 10),
+      balance,
+      savingsRate: savingsRate.toFixed(1),
     };
+  }, [transactions]);
 
-    const aiResponse = await fetchOpenAIResponse(analysisData);
-    if (aiResponse?.analysis) {
-      setAiAnalysis(aiResponse.analysis);
+  const getChartData = useMemo(() => {
+    const last6Days = [...Array(6)]
+      .map((_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        return d.toISOString().split('T')[0];
+      })
+      .reverse();
+
+    return {
+      categories: last6Days.map((date) => formatDate(date)),
+      series: [
+        {
+          name: 'Приходи',
+          data: last6Days.map((date) =>
+            transactions
+              .filter((t) => t.type === 'income' && t.date === date)
+              .reduce((sum, t) => sum + t.amount, 0),
+          ),
+        },
+        {
+          name: 'Разходи',
+          data: last6Days.map((date) =>
+            transactions
+              .filter((t) => t.type === 'expense' && t.date === date)
+              .reduce((sum, t) => sum + t.amount, 0),
+          ),
+        },
+      ],
+    };
+  }, [transactions]);
+
+  const categoryData = useMemo(() => {
+    const filteredTransactions = transactions.filter(
+      (t) => t.type === chartType,
+    );
+    const categories = [
+      ...new Set(filteredTransactions.map((t) => t.category)),
+    ];
+
+    const amounts = categories.map((category) =>
+      filteredTransactions
+        .filter((t) => t.category === category)
+        .reduce((sum, t) => sum + t.amount, 0),
+    );
+
+    return {
+      labels: categories,
+      series: amounts,
+    };
+  }, [transactions, chartType]);
+
+  const handleAIAnalysis = async () => {
+    setIsAiLoading(true);
+    try {
+      const analysisData = {
+        totalIncome: financialMetrics.totalIncome,
+        totalExpense: financialMetrics.totalExpense,
+        totalBalance: financialMetrics.balance,
+        savingsRate: financialMetrics.savingsRate,
+        transactions: transactions.slice(0, 10),
+        categories: {
+          income: categories.income,
+          expense: categories.expense,
+        },
+      };
+
+      const aiResponse = await fetchOpenAIResponse(analysisData);
+      if (aiResponse?.analysis) {
+        setAiAnalysis(aiResponse.analysis);
+      }
+    } catch (error) {
+      console.error('AI Analysis Error:', error);
+    } finally {
+      setIsAiLoading(false);
     }
   };
 
@@ -188,7 +263,10 @@ const ECommerce = () => {
       if (!response.ok) throw new Error('Грешка при добавяне на транзакция');
 
       const data = await response.json();
-      setTransactions([data.transaction, ...transactions]);
+      setTransactions((prevTransactions) => [
+        data.transaction,
+        ...prevTransactions,
+      ]);
       setNewTransaction({
         type: 'income',
         amount: '',
@@ -200,7 +278,6 @@ const ECommerce = () => {
       console.error('Error:', error);
     }
   };
-
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     sessionStorage.removeItem('authToken');
@@ -261,6 +338,7 @@ const ECommerce = () => {
               </p>
             </div>
 
+            {/* Финансови показатели */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <div
                 className={`p-6 rounded-lg ${
@@ -268,13 +346,19 @@ const ECommerce = () => {
                 } backdrop-blur-sm shadow-sm transition-all duration-200`}
               >
                 <h3 className="text-lg font-semibold mb-2">Текущ баланс</h3>
-                <p
-                  className={`text-2xl font-bold ${
-                    balance >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                  }`}
-                >
-                  {balance.toFixed(2)} лв.
-                </p>
+                {isLoading ? (
+                  <div className="animate-pulse h-8 bg-slate-200 rounded"></div>
+                ) : (
+                  <p
+                    className={`text-2xl font-bold ${
+                      financialMetrics.balance >= 0
+                        ? 'text-emerald-400'
+                        : 'text-rose-400'
+                    }`}
+                  >
+                    {financialMetrics.balance.toFixed(2)} лв.
+                  </p>
+                )}
               </div>
 
               <div
@@ -283,9 +367,13 @@ const ECommerce = () => {
                 } backdrop-blur-sm shadow-sm transition-all duration-200`}
               >
                 <h3 className="text-lg font-semibold mb-2">Общо приходи</h3>
-                <p className="text-2xl font-bold text-emerald-400">
-                  {totalIncome.toFixed(2)} лв.
-                </p>
+                {isLoading ? (
+                  <div className="animate-pulse h-8 bg-slate-200 rounded"></div>
+                ) : (
+                  <p className="text-2xl font-bold text-emerald-400">
+                    {financialMetrics.totalIncome.toFixed(2)} лв.
+                  </p>
+                )}
               </div>
 
               <div
@@ -294,9 +382,13 @@ const ECommerce = () => {
                 } backdrop-blur-sm shadow-sm transition-all duration-200`}
               >
                 <h3 className="text-lg font-semibold mb-2">Общо разходи</h3>
-                <p className="text-2xl font-bold text-rose-400">
-                  {totalExpense.toFixed(2)} лв.
-                </p>
+                {isLoading ? (
+                  <div className="animate-pulse h-8 bg-slate-200 rounded"></div>
+                ) : (
+                  <p className="text-2xl font-bold text-rose-400">
+                    {financialMetrics.totalExpense.toFixed(2)} лв.
+                  </p>
+                )}
               </div>
 
               <div
@@ -307,41 +399,46 @@ const ECommerce = () => {
                 <h3 className="text-lg font-semibold mb-2">
                   Процент спестявания
                 </h3>
-                <p className="text-2xl font-bold text-sky-400">
-                  {savingsRate}%
-                </p>
+                {isLoading ? (
+                  <div className="animate-pulse h-8 bg-slate-200 rounded"></div>
+                ) : (
+                  <p className="text-2xl font-bold text-sky-400">
+                    {financialMetrics.savingsRate}%
+                  </p>
+                )}
               </div>
             </div>
 
+            {/* AI Анализ бутон и секция */}
             <div
-              className={`p-6 rounded-lg ${
+              className={`mb-8 p-6 rounded-lg ${
                 isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
-              } backdrop-blur-sm shadow-sm mb-8`}
+              } backdrop-blur-sm shadow-sm`}
             >
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold mb-2">
-                    Твоят AI Финансов Помощник
+                    AI Финансов Анализ
                   </h2>
                   <p
-                    className={`${
-                      isDarkMode ? 'text-slate-400' : 'text-slate-600'
-                    }`}
+                    className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}
                   >
-                    Получи персонализиран анализ на твоя бюджет и умни съвети за
-                    по-добро управление на финансите
+                    Получи персонализиран анализ на твоите финанси и препоръки
+                    за по-добро управление на бюджета
                   </p>
                 </div>
                 <button
                   onClick={handleAIAnalysis}
+                  disabled={isAiLoading}
                   className={`px-6 py-3 rounded-full ${
                     isDarkMode
                       ? 'bg-violet-500/90 hover:bg-violet-600/90'
                       : 'bg-violet-400/90 hover:bg-violet-500/90'
-                  } text-white transition-all duration-200 flex items-center gap-2`}
+                  } text-white transition-all duration-200 flex items-center gap-2 ${
+                    isAiLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
-                  <span className="material-icons">psychology</span>
-                  Анализирай моя бюджет
+                  {isAiLoading ? 'Анализиране...' : 'Анализирай моите финанси'}
                 </button>
               </div>
 
@@ -353,7 +450,7 @@ const ECommerce = () => {
                     }`}
                   >
                     <h3 className="text-xl font-semibold mb-4">
-                      Твоят финансов профил
+                      Финансов профил
                     </h3>
                     <p className="text-lg mb-6">{aiAnalysis.summary}</p>
 
@@ -403,71 +500,10 @@ const ECommerce = () => {
                       ))}
                     </ul>
                   </div>
-
-                  <div
-                    className={`p-6 rounded-lg ${
-                      isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
-                    }`}
-                  >
-                    <h3 className="text-xl font-semibold mb-4">
-                      Потенциал за спестяване
-                    </h3>
-                    <ApexCharts
-                      options={{
-                        chart: {
-                          type: 'radialBar',
-                          background: 'transparent',
-                        },
-                        plotOptions: {
-                          radialBar: {
-                            startAngle: -135,
-                            endAngle: 135,
-                            hollow: {
-                              size: '70%',
-                            },
-                            track: {
-                              background: isDarkMode ? '#475569' : '#E2E8F0',
-                            },
-                            dataLabels: {
-                              name: {
-                                show: true,
-                                color: isDarkMode ? '#E2E8F0' : '#334155',
-                                fontSize: '16px',
-                              },
-                              value: {
-                                formatter: function (val) {
-                                  return val + '%';
-                                },
-                                color: isDarkMode ? '#E2E8F0' : '#334155',
-                                fontSize: '24px',
-                                fontWeight: 600,
-                              },
-                            },
-                          },
-                        },
-                        fill: {
-                          type: 'gradient',
-                          gradient: {
-                            shade: 'dark',
-                            type: 'horizontal',
-                            shadeIntensity: 0.5,
-                            gradientToColors: ['#38BDF8'],
-                            stops: [0, 100],
-                          },
-                        },
-                        stroke: {
-                          lineCap: 'round',
-                        },
-                        labels: ['Потенциал'],
-                      }}
-                      series={[parseFloat(aiAnalysis.savingsPotential)]}
-                      type="radialBar"
-                      height={300}
-                    />
-                  </div>
                 </div>
               )}
             </div>
+
             {/* Форма за добавяне на транзакция */}
             <div
               className={`p-6 rounded-lg ${
@@ -477,7 +513,6 @@ const ECommerce = () => {
               <h2 className="text-xl font-bold mb-4">
                 Добавяне на нова транзакция
               </h2>
-
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <select
@@ -638,34 +673,28 @@ const ECommerce = () => {
                       type: 'pie',
                       background: 'transparent',
                     },
-                    labels: transactions
-                      .filter((t) => t.type === chartType)
-                      .reduce((acc: string[], curr) => {
-                        if (!acc.includes(curr.category))
-                          acc.push(curr.category);
-                        return acc;
-                      }, []),
+                    labels: categoryData.labels,
                     colors:
                       chartType === 'expense'
                         ? [
-                            '#FED7D7',
-                            '#FEB2B2',
-                            '#FC8181',
-                            '#F56565',
-                            '#E53E3E',
-                            '#C53030',
-                            '#9B2C2C',
-                            '#822727',
+                            '#FDA4AF',
+                            '#FB7185',
+                            '#F43F5E',
+                            '#E11D48',
+                            '#BE123C',
+                            '#9F1239',
+                            '#881337',
+                            '#770C2D',
                           ]
                         : [
-                            '#C6F6D5',
-                            '#9AE6B4',
-                            '#68D391',
-                            '#48BB78',
-                            '#38A169',
-                            '#2F855A',
-                            '#276749',
-                            '#22543D',
+                            '#6EE7B7',
+                            '#34D399',
+                            '#10B981',
+                            '#059669',
+                            '#047857',
+                            '#065F46',
+                            '#064E3B',
+                            '#053F2F',
                           ],
                     legend: {
                       position: 'bottom',
@@ -687,14 +716,7 @@ const ECommerce = () => {
                       },
                     ],
                   }}
-                  series={transactions
-                    .filter((t) => t.type === chartType)
-                    .reduce((acc: number[], curr) => {
-                      const index = acc.findIndex((t) => t === curr.amount);
-                      if (index === -1) acc.push(curr.amount);
-                      else acc[index] += curr.amount;
-                      return acc;
-                    }, [])}
+                  series={categoryData.series}
                   type="pie"
                   height={350}
                 />
@@ -718,9 +740,7 @@ const ECommerce = () => {
                     },
                     colors: ['#34D399', '#FB7185'],
                     xaxis: {
-                      categories: transactions
-                        .slice(-6)
-                        .map((t) => formatDate(t.date)),
+                      categories: getChartData.categories,
                       labels: {
                         style: {
                           colors: isDarkMode ? '#E2E8F0' : '#334155',
@@ -740,22 +760,7 @@ const ECommerce = () => {
                       },
                     },
                   }}
-                  series={[
-                    {
-                      name: 'Приходи',
-                      data: transactions
-                        .filter((t) => t.type === 'income')
-                        .slice(-6)
-                        .map((t) => t.amount),
-                    },
-                    {
-                      name: 'Разходи',
-                      data: transactions
-                        .filter((t) => t.type === 'expense')
-                        .slice(-6)
-                        .map((t) => t.amount),
-                    },
-                  ]}
+                  series={getChartData.series}
                   height={350}
                 />
               </div>

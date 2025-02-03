@@ -11,6 +11,7 @@ import ForgotPassword from './pagess/authentication/ForgotPassword';
 import Resetbasic from './pagess/authentication/Resetbasic';
 import Contact from './pagess/contact/Contact';
 import BudgetPlanning from './pagess/home/BudgetPlanning';
+import SavingsGoals from './pagess/home/SavingsGoals';
 
 const App = () => {
   return (
@@ -43,6 +44,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/home/savings-goals" element={<SavingsGoals />} />
       </Routes>
     </ThemeProvider>
   );

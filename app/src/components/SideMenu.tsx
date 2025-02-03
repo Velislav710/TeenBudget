@@ -53,7 +53,7 @@ const SideMenu = () => {
     },
     {
       title: 'Цели за спестяване',
-      path: '/savings-goals',
+      path: '/home/savings-goals',
       icon: (
         <svg
           className="w-6 h-6"
