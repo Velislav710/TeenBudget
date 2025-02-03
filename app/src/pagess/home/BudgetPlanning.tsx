@@ -43,12 +43,15 @@ const BudgetPlanning = () => {
         const token =
           localStorage.getItem('authToken') ||
           sessionStorage.getItem('authToken');
-        const response = await fetch('http://localhost:5000/transactions', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/transactions`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
           },
-        });
+        );
 
         if (!response.ok) throw new Error('Грешка при зареждане на транзакции');
 

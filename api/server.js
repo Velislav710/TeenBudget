@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 require("dotenv").config();
 
-const whitelist = ["http://localhost:5173"];
+const whitelist = ["http://localhost:5173", "https://teenbudget.noit.eu"];
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || whitelist.includes(origin)) {

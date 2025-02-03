@@ -1,11 +1,8 @@
 const mysql = require("mysql2");
+const dbOpts = require("./config.js").dbOpts;
+const dbOptsLocal = require("./config.js").dbOptsLocal;
 
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "teenbudget"
-});
+const db = mysql.createConnection(dbOptsLocal);
 
 db.connect((err) => {
   if (err) throw err;

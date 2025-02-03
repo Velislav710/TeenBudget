@@ -86,12 +86,15 @@ const ECommerce = () => {
           return;
         }
 
-        const response = await fetch('http://localhost:5000/transactions', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/transactions`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
           },
-        });
+        );
 
         if (!response.ok) {
           throw new Error('Грешка при зареждане на транзакциите');
@@ -245,20 +248,23 @@ const ECommerce = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/transactions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/transactions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            type: newTransaction.type,
+            amount: parseFloat(newTransaction.amount),
+            category: newTransaction.category,
+            description: newTransaction.description.trim(),
+            date: new Date().toISOString().split('T')[0],
+          }),
         },
-        body: JSON.stringify({
-          type: newTransaction.type,
-          amount: parseFloat(newTransaction.amount),
-          category: newTransaction.category,
-          description: newTransaction.description.trim(),
-          date: new Date().toISOString().split('T')[0],
-        }),
-      });
+      );
 
       if (!response.ok) throw new Error('Грешка при добавяне на транзакция');
 
