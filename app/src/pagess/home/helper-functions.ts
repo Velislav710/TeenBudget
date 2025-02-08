@@ -50,7 +50,11 @@ export const fetchOpenAIResponse = async (
     return null;
   }
 };
-export const fetchBudgetPlanningAI = async (planningData) => {
+
+export const fetchBudgetPlanningAI = async (planningData: {
+  expectedIncome: number;
+  previousCategories: Record<string, number>;
+}) => {
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -63,7 +67,7 @@ export const fetchBudgetPlanningAI = async (planningData) => {
         messages: [
           {
             role: 'system',
-            content: `Ти си финансов съветник за тийнейджъри. На база очаквания доход от ${planningData.expectedIncome} лв. и предишните средни разходи по категории, предложи конкретно разпределение на бюджета в следния формат:
+            content: `Ти си финансов съветник за тийнейджъри. Анализирай предишните разходи и предложи оптимално разпределение на бюджета за следващия месец. Върни отговора само в следния JSON формат:
             {
               "suggestions": {
                 "Храна": число,
@@ -75,7 +79,11 @@ export const fetchBudgetPlanningAI = async (planningData) => {
                 "Други": число
               },
               "analysis": {
-                "recommendations": ["3 конкретни препоръки за оптимизиране на бюджета"]
+                "recommendations": [
+                  "конкретен съвет за оптимизиране на разходите",
+                  "съвет за спестяване",
+                  "препоръка за балансиране на бюджета"
+                ]
               }
             }`,
           },
@@ -83,24 +91,36 @@ export const fetchBudgetPlanningAI = async (planningData) => {
             role: 'user',
             content: `Разпредели ${
               planningData.expectedIncome
-            } лв. по категории, като вземеш предвид предишните средни разходи: ${JSON.stringify(
-              planningData.previousCategories,
-            )}`,
+            } лв. по категориите, като вземеш предвид предишните средни разходи:
+            ${JSON.stringify(planningData.previousCategories, null, 2)}.
+            Дай разумни препоръки за оптимизиране на бюджета спрямо тенденциите в харченето.`,
           },
         ],
         temperature: 0.7,
+        max_tokens: 1000,
       }),
     });
 
+    if (!response.ok) {
+      throw new Error(`OpenAI API Error: ${response.status}`);
+    }
+
     const data = await response.json();
-    return JSON.parse(data.choices[0].message.content);
+    const content = data.choices[0]?.message?.content;
+
+    return content ? JSON.parse(content) : null;
   } catch (error) {
-    console.error('AI Error:', error);
+    console.error('AI Analysis Error:', error);
     return null;
   }
 };
 
-export const generateAIAnalysis = async (goalData: any) => {
+export const generateAIAnalysis = async (goalData: {
+  name: string;
+  targetAmount: number;
+  deadline: string;
+  monthlyIncome: number;
+}) => {
   const cacheKey = `goal_${goalData.name}_${goalData.targetAmount}`;
   const cachedAnalysis = localStorage.getItem(cacheKey);
 
@@ -117,45 +137,54 @@ export const generateAIAnalysis = async (goalData: any) => {
       },
       body: JSON.stringify({
         model: 'gpt-4',
-        temperature: 0.7,
         messages: [
           {
             role: 'system',
             content:
-              'Ти си финансов съветник за тийнейджъри. Създай персонализиран план за спестяване.',
+              'Ти си финансов съветник за тийнейджъри. Създай персонализиран план за спестяване, който да е реалистичен и постижим.',
           },
           {
             role: 'user',
-            content: `Анализирай следната цел:
+            content: `Създай план за следната цел:
               Цел: ${goalData.name}
               Сума: ${goalData.targetAmount} лв.
-              Срок: ${goalData.deadline}
-              Месечен доход: ${goalData.monthlyIncome}
+              Краен срок: ${goalData.deadline}
+              Месечен доход: ${goalData.monthlyIncome} лв.
               
-              Върни отговора в следния формат:
+              Върни отговора в следния JSON формат:
               {
                 "mainPlan": {
-                  "monthlyTarget": ${goalData.targetAmount / 6},
-                  "timeline": "конкретен срок в месеци",
+                  "monthlyTarget": число,
+                  "timeline": "срок в месеци",
                   "steps": ["3 конкретни стъпки за постигане на целта"]
                 },
                 "alternativeMethods": {
                   "suggestions": ["3 начина за допълнителни доходи"],
-                  "expectedResults": "мотивиращо описание на резултата"
+                  "expectedResults": "описание на очаквания резултат"
                 }
               }`,
           },
         ],
+        temperature: 0.7,
+        max_tokens: 1000,
       }),
     });
 
-    const data = await response.json();
-    const analysis = JSON.parse(data.choices[0].message.content);
+    if (!response.ok) {
+      throw new Error(`OpenAI API Error: ${response.status}`);
+    }
 
-    localStorage.setItem(cacheKey, JSON.stringify(analysis));
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+    const analysis = content ? JSON.parse(content) : null;
+
+    if (analysis) {
+      localStorage.setItem(cacheKey, JSON.stringify(analysis));
+    }
+
     return analysis;
   } catch (error) {
     console.error('AI Analysis Error:', error);
-    throw error;
+    return null;
   }
 };

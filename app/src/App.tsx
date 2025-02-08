@@ -12,6 +12,10 @@ import Resetbasic from './pagess/authentication/Resetbasic';
 import Contact from './pagess/contact/Contact';
 import BudgetPlanning from './pagess/home/BudgetPlanning';
 import SavingsGoals from './pagess/home/SavingsGoals';
+import ExpenseAnalytics from './pagess/home/ExpenseAnalytics';
+import FinancialEducation from './pagess/home/FinancialEducation';
+import Reports from './pagess/home/Reports';
+import Settings from './pagess/home/Settings';
 
 const App = () => {
   return (
@@ -45,6 +49,38 @@ const App = () => {
           }
         />
         <Route path="/home/savings-goals" element={<SavingsGoals />} />
+        <Route
+          path="/home/expense-analytics"
+          element={
+            <ProtectedRoute>
+              <ExpenseAnalytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/financial-education"
+          element={
+            <ProtectedRoute>
+              <FinancialEducation />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/reports"
+          element={
+            <ProtectedRoute>
+              <Reports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/home/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </ThemeProvider>
   );

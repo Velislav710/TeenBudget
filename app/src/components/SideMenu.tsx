@@ -72,7 +72,7 @@ const SideMenu = () => {
     },
     {
       title: 'Анализ на разходите',
-      path: '/expense-analytics',
+      path: '/home/expense-analytics',
       icon: (
         <svg
           className="w-6 h-6"
@@ -91,7 +91,7 @@ const SideMenu = () => {
     },
     {
       title: 'Финансово образование',
-      path: '/financial-education',
+      path: '/home/financial-education',
       icon: (
         <svg
           className="w-6 h-6"
@@ -110,7 +110,7 @@ const SideMenu = () => {
     },
     {
       title: 'Справки и експорт',
-      path: '/reports',
+      path: '/home/reports',
       icon: (
         <svg
           className="w-6 h-6"
@@ -128,28 +128,8 @@ const SideMenu = () => {
       ),
     },
     {
-      title: 'Контакти',
-      path: '/contact',
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-          />
-        </svg>
-      ),
-    },
-
-    {
       title: 'Настройки',
-      path: '/settings',
+      path: '/home/settings',
       icon: (
         <svg
           className="w-6 h-6"
@@ -173,7 +153,6 @@ const SideMenu = () => {
       ),
     },
   ];
-
   return (
     <div
       className={`h-screen w-64 fixed left-0 top-0 ${

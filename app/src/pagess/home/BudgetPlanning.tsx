@@ -28,7 +28,48 @@ const BudgetPlanning = () => {
       previousAverage: 0,
       icon: '🍽️',
     },
-    // ... останалите категории
+    {
+      name: 'Транспорт',
+      planned: 0,
+      aiSuggested: 0,
+      previousAverage: 0,
+      icon: '🚌',
+    },
+    {
+      name: 'Развлечения',
+      planned: 0,
+      aiSuggested: 0,
+      previousAverage: 0,
+      icon: '🎮',
+    },
+    {
+      name: 'Спорт и здраве',
+      planned: 0,
+      aiSuggested: 0,
+      previousAverage: 0,
+      icon: '⚽',
+    },
+    {
+      name: 'Образование',
+      planned: 0,
+      aiSuggested: 0,
+      previousAverage: 0,
+      icon: '📚',
+    },
+    {
+      name: 'Дрехи',
+      planned: 0,
+      aiSuggested: 0,
+      previousAverage: 0,
+      icon: '👕',
+    },
+    {
+      name: 'Други',
+      planned: 0,
+      aiSuggested: 0,
+      previousAverage: 0,
+      icon: '📦',
+    },
   ]);
 
   const nextMonth = new Date();
@@ -85,52 +126,39 @@ const BudgetPlanning = () => {
     }
   };
 
-  const handleConfirmIncome = () => {
+  const handleConfirmIncome = async () => {
     const income = Number(expectedIncome);
     if (income > 0) {
       setConfirmedIncome(income);
 
-      // Директно задаваме стойности
-      const newCategories = categories.map((cat) => {
-        let percentage;
-        switch (cat.name) {
-          case 'Храна':
-            percentage = 0.3;
-            break;
-          case 'Транспорт':
-            percentage = 0.15;
-            break;
-          case 'Развлечения':
-            percentage = 0.15;
-            break;
-          case 'Спорт и здраве':
-            percentage = 0.1;
-            break;
-          case 'Образование':
-            percentage = 0.1;
-            break;
-          case 'Дрехи':
-            percentage = 0.1;
-            break;
-          case 'Други':
-            percentage = 0.1;
-            break;
-          default:
-            percentage = 0;
+      try {
+        const aiResult = await fetchBudgetPlanningAI({
+          expectedIncome: income,
+          previousCategories: categories.reduce(
+            (acc, cat) => {
+              acc[cat.name] = cat.previousAverage;
+              return acc;
+            },
+            {} as Record<string, number>,
+          ),
+        });
+
+        if (aiResult && aiResult.suggestions) {
+          const newCategories = categories.map((cat) => ({
+            ...cat,
+            planned: aiResult.suggestions[cat.name] || 0,
+            aiSuggested: aiResult.suggestions[cat.name] || 0,
+          }));
+
+          setCategories(newCategories);
+          setAiAnalysis(aiResult.analysis);
         }
-
-        const suggestedAmount = income * percentage;
-
-        return {
-          ...cat,
-          planned: suggestedAmount,
-          aiSuggested: suggestedAmount,
-        };
-      });
-
-      setCategories(newCategories);
+      } catch (error) {
+        console.error('Error in handleConfirmIncome:', error);
+      }
     }
   };
+
   const handleCategoryChange = (index: number, value: number) => {
     if (confirmedIncome > 0) {
       const newCategories = [...categories];
