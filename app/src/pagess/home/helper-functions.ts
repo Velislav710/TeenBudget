@@ -32,8 +32,6 @@ export const fetchOpenAIResponse = async (
             ${JSON.stringify(transactionData, null, 2)}`,
           },
         ],
-        temperature: 0.7,
-        max_tokens: 1000,
       }),
     });
 
@@ -96,8 +94,6 @@ export const fetchBudgetPlanningAI = async (planningData: {
             Дай разумни препоръки за оптимизиране на бюджета спрямо тенденциите в харченето.`,
           },
         ],
-        temperature: 0.7,
-        max_tokens: 1000,
       }),
     });
 
@@ -165,8 +161,6 @@ export const generateAIAnalysis = async (goalData: {
               }`,
           },
         ],
-        temperature: 0.7,
-        max_tokens: 1000,
       }),
     });
 
