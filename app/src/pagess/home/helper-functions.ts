@@ -15,20 +15,49 @@ export const fetchOpenAIResponse = async (
         messages: [
           {
             role: 'system',
-            content: `Ти си професионален финансов анализатор за тийнейджъри. Анализирай финансовите данни и създай полезни препоръки на книжовен български език. Отговаряй само в следния JSON формат:
+            content: `Ти си професионален финансов анализатор за тийнейджъри. Анализирай финансовите данни и създай изключително подробен анализ на български език. Отговаряй в следния JSON формат:
             {
               "analysis": {
-                "summary": "Подробно обобщение на финансовото състояние",
-                "recommendations": ["3 конкретни и практични препоръки"],
-                "savingsPotential": "процент възможни спестявания (число)",
-                "monthlyTrend": "тенденция спрямо предходен период",
-                "topCategory": "категорията с най-много транзакции"
+                "overallSummary": {
+                  "mainFindings": "подробно обобщение на финансовото състояние в поне 300 думи",
+                  "keyInsights": ["5 ключови извода с конкретни числа и проценти"],
+                  "riskAreas": ["3 рискови области с подробно обяснение"]
+                },
+                "categoryAnalysis": {
+                  "topCategory": "най-голяма категория разходи с подробен анализ",
+                  "categoryBreakdown": [{
+                    "category": "име на категория",
+                    "analysis": "200 думи анализ за всяка категория",
+                    "trends": "детайлни тенденции",
+                    "recommendations": ["3 конкретни препоръки"]
+                  }]
+                },
+                "behavioralInsights": {
+                  "spendingPatterns": "подробен анализ на моделите на харчене в 200 думи",
+                  "emotionalTriggers": ["5 емоционални тригера за харчене"],
+                  "socialFactors": "влияние на социалната среда върху харченето"
+                },
+                "detailedRecommendations": {
+                  "immediate": ["5 спешни действия с обяснение"],
+                  "shortTerm": ["5 краткосрочни препоръки"],
+                  "longTerm": ["5 дългосрочни стратегии"]
+                },
+                "educationalGuidance": {
+                  "financialLiteracy": "200 думи образователни насоки",
+                  "practicalSkills": ["5 практически умения за развиване"],
+                  "resources": ["3 препоръчани ресурса за обучение"]
+                },
+                "futureProjections": {
+                  "nextMonth": "прогноза за следващия месец",
+                  "threeMonths": "тримесечна прогноза",
+                  "savingsPotential": "конкретен план за спестявания"
+                }
               }
             }`,
           },
           {
             role: 'user',
-            content: `Анализирай следните финансови данни и дай конкретни препоръки:
+            content: `Анализирай следните финансови данни и създай изключително подробен анализ:
             ${JSON.stringify(transactionData, null, 2)}`,
           },
         ],
@@ -48,7 +77,6 @@ export const fetchOpenAIResponse = async (
     return null;
   }
 };
-
 export const fetchBudgetPlanningAI = async (planningData: {
   expectedIncome: number;
   previousCategories: Record<string, number>;
