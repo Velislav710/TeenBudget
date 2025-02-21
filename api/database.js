@@ -67,6 +67,37 @@ const deleteTransactionsByUserId = (userId, callback) => {
   db.query(query, [userId], callback);
 };
 
+const createAIanalysis = (
+  userId,
+  total_income,
+  total_expense,
+  total_balance,
+  savings_rate,
+  main_findings,
+  key_insights,
+  risk_areas,
+  date,
+  callback
+) => {
+  const query =
+    "INSERT INTO expense_analysis (user_id, total_income, total_expense, total_balance, savings_rate, main_findings, key_insights, risk_areas, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  db.query(
+    query,
+    [
+      userId,
+      total_income,
+      total_expense,
+      total_balance,
+      savings_rate,
+      main_findings,
+      key_insights,
+      risk_areas,
+      date
+    ],
+    callback
+  );
+};
+
 module.exports = {
   db,
   checkEmailExists,
@@ -76,5 +107,6 @@ module.exports = {
   getUserById,
   createTransaction,
   getTransactionsByUserId,
-  deleteTransactionsByUserId
+  deleteTransactionsByUserId,
+  createAIanalysis // Добавяме тук функцията
 };
