@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import WelcomePage from './pagess/landing/WelcomePage.tsx';
 import LoginPage from './pagess/authentication/LoginPage';
@@ -21,6 +21,7 @@ const App = () => {
   return (
     <ThemeProvider>
       <Routes>
+        <Route path="*" element={<Navigate to="/main" />} />
         <Route path="/" element={<WelcomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
