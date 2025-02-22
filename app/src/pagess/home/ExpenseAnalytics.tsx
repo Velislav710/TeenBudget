@@ -66,12 +66,16 @@ const ExpenseAnalytics = () => {
         (sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount),
         0,
       );
+      const totalIncome = data.transactions
+        .filter((t: { type: string }) => t.type === 'income')
+        .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
 
       const analysisData = {
         transactions: filteredTransactions,
         period: selectedPeriod + ' days',
         totalSpent,
         totalBalance,
+        totalIncome,
         categorySummary: getCategorySummary(filteredTransactions),
         spendingPatterns: analyzeSpendingPatterns(filteredTransactions),
         trends: analyzeTrends(filteredTransactions),
@@ -79,6 +83,32 @@ const ExpenseAnalytics = () => {
 
       const aiResult = await fetchOpenAIResponse(analysisData);
       setAiAnalysis(aiResult);
+
+      // Добавяме изпращане към базата данни
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/expense_analysis`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          total_income: analysisData.totalIncome,
+          total_expense: analysisData.totalSpent,
+          total_balance: analysisData.totalBalance,
+          savings_rate:
+            ((analysisData.totalIncome - analysisData.totalSpent) /
+              analysisData.totalIncome) *
+            100,
+          main_findings: aiResult.analysis.overallSummary.mainFindings,
+          key_insights: JSON.stringify(
+            aiResult.analysis.overallSummary.keyInsights,
+          ),
+          risk_areas: JSON.stringify(
+            aiResult.analysis.overallSummary.riskAreas,
+          ),
+          date: new Date(),
+        }),
+      });
 
       prepareVisualizationData(filteredTransactions);
       setIsGeneratingAnalysis(false);
