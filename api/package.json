@@ -16,7 +16,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node index",
-    "test": "npx jest createAIanalysis.test.js"
+    "test": "npx jest"
   },
   "keywords": [],
   "author": "",
