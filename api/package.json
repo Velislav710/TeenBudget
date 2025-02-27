@@ -15,10 +15,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "node index"
+    "dev": "node index",
+    "test": "npx jest createAIanalysis.test.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
 }
