@@ -456,8 +456,8 @@ const ECommerce = () => {
               <div className="mb-8 grid grid-cols-1 gap-6">
                 <div
                   className={`col-span-2 p-6 rounded-lg ${
-                    isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
-                  }`}
+                    isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
+                  } backdrop-blur-sm shadow-sm`}
                 >
                   <h3 className="text-xl font-semibold mb-4">
                     Финансов профил
