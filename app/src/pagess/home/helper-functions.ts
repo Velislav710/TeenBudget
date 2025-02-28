@@ -76,8 +76,9 @@ export const fetchOpenAIResponse = async (
       .replace(/^```([\s\S]*?)```$/, '$1')
       .replace(/^'|'$/g, '')
       .trim();
-    console.log('unescapedData: ', unescapedData);
-    return unescapedData;
+
+    const parsedData = JSON.parse(unescapedData);
+    return parsedData;
   } catch (error) {
     console.error('AI Analysis Error:', error);
     return null;

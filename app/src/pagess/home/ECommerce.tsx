@@ -229,10 +229,9 @@ const ECommerce = () => {
         },
       };
 
-      const aiResponse = await fetchOpenAIResponse(analysisData);
-      console.log('aiResponse:', aiResponse);
-      if (aiResponse?.analysis) {
-        setAiAnalysis(aiResponse.analysis);
+      const aiResponseFromOpenAI = await fetchOpenAIResponse(analysisData);
+      if (aiResponseFromOpenAI) {
+        setAiAnalysis(aiResponseFromOpenAI.analysis);
       }
     } catch (error) {
       console.error('AI Analysis Error:', error);
@@ -240,6 +239,7 @@ const ECommerce = () => {
       setIsAiLoading(false);
     }
   };
+  console.log('aiAnalysis:', aiAnalysis);
 
   const validateForm = () => {
     const errors: FormErrors = {
