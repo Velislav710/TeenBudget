@@ -4,7 +4,7 @@ import ThemeToggle from '../../components/ThemeToggle';
 import ApexCharts from 'react-apexcharts';
 import SideMenu from '../../components/SideMenu';
 import Footer from '../../components/Footerr/Footer';
-import { fetchOpenAIResponse } from './helper-functions';
+import { fetchExpenseAnalytics } from './helper-functions';
 
 interface Transaction {
   id: number;
@@ -90,7 +90,7 @@ const ExpenseAnalytics = () => {
       };
 
       console.log('analysisData: ', analysisData);
-      const aiResult = await fetchOpenAIResponse(analysisData);
+      const aiResult = await fetchExpenseAnalytics(analysisData);
       console.log('aiResult: ', aiResult);
 
       setAiAnalysis(aiResult);

@@ -1,6 +1,6 @@
 import { TransactionAnalysisData } from './home-types';
 
-export const fetchOpenAIResponse = async (
+export const fetchExpenseAnalytics = async (
   transactionData: TransactionAnalysisData,
 ) => {
   try {
@@ -79,6 +79,57 @@ export const fetchOpenAIResponse = async (
 
     const parsedData = JSON.parse(unescapedData);
     return parsedData;
+  } catch (error) {
+    console.error('AI Analysis Error:', error);
+    return null;
+  }
+};
+
+export const fetchDashboardAnalysis = async (
+  transactionData: TransactionAnalysisData,
+) => {
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: `Ти си професионален финансов анализатор за тийнейджъри. Анализирай финансовите данни и създай полезни препоръки на книжовен български език. Отговаряй само в следния JSON формат:
+            {
+              "analysis": {
+                "summary": "Подробно обобщение на финансовото състояние",
+                "recommendations": ["3 конкретни и практични препоръки"],
+                "savingsPotential": "процент възможни спестявания (число)",
+                "monthlyTrend": "тенденция спрямо предходен период",
+                "topCategory": "категорията с най-много транзакции"
+              }
+            }`,
+          },
+          {
+            role: 'user',
+            content: `Анализирай следните финансови данни и дай конкретни препоръки:
+            ${JSON.stringify(transactionData, null, 2)}`,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+
+    return content ? JSON.parse(content) : null;
   } catch (error) {
     console.error('AI Analysis Error:', error);
     return null;

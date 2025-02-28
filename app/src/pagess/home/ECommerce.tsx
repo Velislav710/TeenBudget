@@ -5,7 +5,7 @@ import ThemeToggle from '../../components/ThemeToggle';
 import ApexCharts from 'react-apexcharts';
 import SideMenu from '../../components/SideMenu';
 import Footer from '../../components/Footerr/Footer';
-import { fetchOpenAIResponse } from './helper-functions';
+import { fetchDashboardAnalysis } from './helper-functions';
 
 const categories = {
   income: ['Джобни', 'Подарък', 'Стипендия', 'Работа', 'Други'],
@@ -38,40 +38,11 @@ interface FormErrors {
 }
 
 interface AIAnalysis {
-  overallSummary: {
-    mainFindings: string;
-    keyInsights: string[];
-    riskAreas: string[];
-  };
-  categoryAnalysis: {
-    topCategory: string;
-    categoryBreakdown: {
-      category: string;
-      analysis: string;
-      trends: string;
-      recommendations: string[];
-    }[];
-  };
-  behavioralInsights: {
-    spendingPatterns: string;
-    emotionalTriggers: string[];
-    socialFactors: string;
-  };
-  detailedRecommendations: {
-    immediate: string[];
-    shortTerm: string[];
-    longTerm: string[];
-  };
-  educationalGuidance: {
-    financialLiteracy: string;
-    practicalSkills: string[];
-    resources: string[];
-  };
-  futureProjections: {
-    nextMonth: string;
-    threeMonths: string;
-    savingsPotential: string;
-  };
+  summary: string;
+  recommendations: string[];
+  savingsPotential: string;
+  monthlyTrend: string;
+  topCategory: string;
 }
 
 const ECommerce = () => {
@@ -229,7 +200,7 @@ const ECommerce = () => {
         },
       };
 
-      const aiResponseFromOpenAI = await fetchOpenAIResponse(analysisData);
+      const aiResponseFromOpenAI = await fetchDashboardAnalysis(analysisData);
       if (aiResponseFromOpenAI) {
         setAiAnalysis(aiResponseFromOpenAI.analysis);
       }
@@ -479,80 +450,61 @@ const ECommerce = () => {
               </div>
             </div>
             {aiAnalysis && (
-              <div className="mb-8 grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div
                   className={`col-span-2 p-6 rounded-lg ${
-                    isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
-                  } backdrop-blur-sm shadow-sm`}
+                    isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
+                  }`}
                 >
                   <h3 className="text-xl font-semibold mb-4">
                     Финансов профил
                   </h3>
-                  <div
-                    className={`text-lg mb-6 ${
-                      isDarkMode ? 'text-slate-400' : 'text-slate-600'
-                    }`}
-                  >
-                    <p>{aiAnalysis.overallSummary.mainFindings}</p>
-                    <ul>
-                      {aiAnalysis.overallSummary.keyInsights.map(
-                        (insight, index) => (
-                          <li key={index}>{insight}</li>
-                        ),
-                      )}
-                    </ul>
-                    <ul>
-                      {aiAnalysis.overallSummary.riskAreas.map(
-                        (risk, index) => (
-                          <li key={index}>{risk}</li>
-                        ),
-                      )}
-                    </ul>
-                  </div>
+                  <p className="text-lg mb-6">{aiAnalysis.summary}</p>
 
                   <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className={`rounded-lg `}>
+                    <div
+                      className={`p-4 rounded-lg ${
+                        isDarkMode ? 'bg-slate-600/50' : 'bg-white/50'
+                      }`}
+                    >
+                      <h4 className="font-medium mb-2">Месечна тенденция</h4>
+                      <div className="flex items-center gap-2">
+                        <span className="material-icons text-emerald-400">
+                          {aiAnalysis.monthlyTrend.includes('повече')
+                            ? 'trending_up'
+                            : 'trending_down'}
+                        </span>
+                        <span>{aiAnalysis.monthlyTrend}</span>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`p-4 rounded-lg ${
+                        isDarkMode ? 'bg-slate-600/50' : 'bg-white/50'
+                      }`}
+                    >
+                      <h4 className="font-medium mb-2">Топ категория</h4>
                       <div className="flex items-center gap-2">
                         <span className="material-icons text-sky-400">
-                          Топ категория:
+                          category
                         </span>
-                        <span
-                          className={`${
-                            isDarkMode ? 'text-slate-400' : 'text-slate-600'
-                          }`}
-                        >
-                          {aiAnalysis.categoryAnalysis.topCategory}
-                        </span>
+                        <span>{aiAnalysis.topCategory}</span>
                       </div>
                     </div>
                   </div>
 
+                  <h4 className="font-semibold mb-3">
+                    Персонализирани препоръки
+                  </h4>
                   <ul className="space-y-3">
-                    {aiAnalysis.categoryAnalysis.categoryBreakdown.map(
-                      (item, index) => (
-                        <li key={index} className="flex items-start gap-3">
-                          <span className="material-icons text-violet-400">
-                            Съвети:
-                          </span>
-                          <ul className="list-disc pl-6">
-                            {item.recommendations.map(
-                              (recommendation, recIndex) => (
-                                <li
-                                  key={recIndex}
-                                  className={`${
-                                    isDarkMode
-                                      ? 'text-slate-400'
-                                      : 'text-slate-600'
-                                  }`}
-                                >
-                                  {recommendation}
-                                </li>
-                              ),
-                            )}
-                          </ul>
-                        </li>
-                      ),
-                    )}
+                    {aiAnalysis.recommendations.map((rec, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <span className="material-icons text-violet-400">
+                          tips_and_updates
+                        </span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </div>
