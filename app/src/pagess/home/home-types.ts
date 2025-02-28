@@ -17,3 +17,22 @@ export interface DashboardAnalysis {
   topCategory: string;
   date: string; // Assuming date is a string in YYYY-MM-DD format, but you can use Date type if needed
 }
+
+export interface Suggestions {
+  Храна: number;
+  Транспорт: number;
+  Развлечения: number;
+  'Спорт и здраве': number;
+  Образование: number;
+  Дрехи: number;
+  Други: number;
+}
+
+export interface Analysis {
+  recommendations: string[];
+}
+
+export interface AIResult {
+  suggestions: Suggestions;
+  analysis: Analysis;
+}

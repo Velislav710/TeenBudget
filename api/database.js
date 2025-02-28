@@ -86,6 +86,37 @@ const insertDashboardAnalysis = (userId, data, callback) => {
   db.query(query, values, callback);
 };
 
+const insertFinancialAnalysis = (
+  userId,
+  food,
+  transport,
+  entertainment,
+  sport_and_health,
+  education,
+  clothes,
+  others,
+  recommendations,
+  callback
+) => {
+  const query =
+    "INSERT INTO financial_analysis (user_id, food, transport, entertainment, sport_and_health, education, clothes, others, recommendations) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  db.query(
+    query,
+    [
+      userId,
+      food,
+      transport,
+      entertainment,
+      sport_and_health,
+      education,
+      clothes,
+      others,
+      JSON.stringify(recommendations) // Convert recommendations to a JSON string
+    ],
+    callback
+  );
+};
+
 const createAIanalysis = (
   userId,
   total_income,
@@ -127,5 +158,6 @@ module.exports = {
   getTransactionsByUserId,
   deleteTransactionsByUserId,
   insertDashboardAnalysis,
+  insertFinancialAnalysis,
   createAIanalysis
 };

@@ -1,4 +1,8 @@
-import { DashboardAnalysis, TransactionAnalysisData } from './home-types';
+import {
+  DashboardAnalysis,
+  TransactionAnalysisData,
+  AIResult,
+} from './home-types';
 
 export const fetchDashboardAnalysis = async (
   transactionData: TransactionAnalysisData,
@@ -61,7 +65,6 @@ export const saveDashboardAnalysis = async ({
   savingsPotential,
   monthlyTrend,
   topCategory,
-  date,
 }: DashboardAnalysis) => {
   try {
     const token =
@@ -69,7 +72,7 @@ export const saveDashboardAnalysis = async ({
 
     // Изпращаме POST заявка до сървъра за запис на анализите
     const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/dashboard_analysis`,
+      `${import.meta.env.VITE_API_BASE_URL}/save-dashboard-analysis`,
       {
         method: 'POST',
         headers: {
@@ -83,7 +86,6 @@ export const saveDashboardAnalysis = async ({
           savingsPotential,
           monthlyTrend,
           topCategory,
-          date,
         }),
       },
     );
@@ -186,7 +188,7 @@ export const fetchExpenseAnalytics = async (
   }
 };
 
-export const fetchBudgetPlanningAI = async (planningData: {
+export const fetchFinancialAnalysisAI = async (planningData: {
   expectedIncome: number;
   previousCategories: Record<string, number>;
 }) => {
@@ -253,6 +255,49 @@ export const fetchBudgetPlanningAI = async (planningData: {
   } catch (error) {
     console.error('AI Analysis Error:', error);
     return null;
+  }
+};
+
+export const saveFinancialAnalysis = async ({
+  analysis,
+  suggestions,
+}: AIResult) => {
+  try {
+    const token =
+      localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+
+    // Sending POST request to the server to save the financial analysis
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/save-financial-analysis`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          food: suggestions.Храна,
+          transport: suggestions.Транспорт,
+          entertainment: suggestions.Развлечения,
+          sport_and_health: suggestions['Спорт и здраве'],
+          education: suggestions.Образование,
+          clothes: suggestions.Дрехи,
+          others: suggestions.Други,
+          recommendations: analysis.recommendations,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error('Грешка при записване на финансовия анализ');
+    }
+
+    const responseJson = await response.json();
+    console.log('Записът на финансовия анализ беше успешен:', responseJson);
+    return responseJson;
+  } catch (error) {
+    console.error('Грешка при записа на финансовия анализ:', error);
+    return { error: 'Грешка при записа на финансовия анализ' };
   }
 };
 

@@ -4,7 +4,10 @@ import ThemeToggle from '../../components/ThemeToggle';
 import ApexCharts from 'react-apexcharts';
 import SideMenu from '../../components/SideMenu';
 import Footer from '../../components/Footerr/Footer';
-import { fetchBudgetPlanningAI } from './helper-functions';
+import {
+  fetchFinancialAnalysisAI,
+  saveFinancialAnalysis,
+} from './helper-functions';
 
 interface BudgetCategory {
   name: string;
@@ -132,7 +135,7 @@ const BudgetPlanning = () => {
       setConfirmedIncome(income);
 
       try {
-        const aiResult = await fetchBudgetPlanningAI({
+        const aiResult = await fetchFinancialAnalysisAI({
           expectedIncome: income,
           previousCategories: categories.reduce(
             (acc, cat) => {
@@ -150,6 +153,8 @@ const BudgetPlanning = () => {
             aiSuggested: aiResult.suggestions[cat.name] || 0,
           }));
 
+          console.log('aiResult: ', aiResult);
+          saveFinancialAnalysis(aiResult as any);
           setCategories(newCategories);
           setAiAnalysis(aiResult.analysis);
         }
