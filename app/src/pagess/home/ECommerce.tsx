@@ -337,7 +337,7 @@ const ECommerce = () => {
 
           <main className="pt-20 px-8 pb-8">
             <div
-              className={`my-8 p-4 rounded-lg ${
+              className={`my-8 p-4 text-2xl rounded-lg ${
                 isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
               } backdrop-blur-sm shadow-sm`}
             >
