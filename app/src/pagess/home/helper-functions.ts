@@ -11,7 +11,7 @@ export const fetchOpenAIResponse = async (
         Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -96,7 +96,7 @@ export const fetchBudgetPlanningAI = async (planningData: {
         Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
