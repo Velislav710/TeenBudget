@@ -21,7 +21,7 @@ const ExpenseAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('30');
+  const [selectedPeriod, setSelectedPeriod] = useState<number>(30);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [timelineData, setTimelineData] = useState<any>([]);
   const [categoryTrends, setCategoryTrends] = useState<any>([]);
@@ -45,17 +45,25 @@ const ExpenseAnalytics = () => {
       if (!response.ok) throw new Error('Failed to fetch transactions');
 
       const data = await response.json();
+
       const expenseTransactions = data.transactions.filter(
         (t: Transaction) => t.type === 'expense',
       );
 
       const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - parseInt(selectedPeriod));
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - selectedPeriod); // Ясно преобразуване в число
 
       const filteredTransactions = expenseTransactions.filter(
-        (t: Transaction) => new Date(t.date) >= thirtyDaysAgo,
+        (t: Transaction) => {
+          const transactionDate = new Date(t.date); // Уверяваме се, че е Date обект
+          return (
+            !isNaN(transactionDate.getTime()) &&
+            transactionDate >= thirtyDaysAgo
+          );
+        },
       );
 
+      console.log('filteredTransactions: ', filteredTransactions);
       setTransactions(filteredTransactions);
 
       const totalSpent = filteredTransactions.reduce(
@@ -81,7 +89,10 @@ const ExpenseAnalytics = () => {
         trends: analyzeTrends(filteredTransactions),
       };
 
+      console.log('analysisData: ', analysisData);
       const aiResult = await fetchOpenAIResponse(analysisData);
+      console.log('aiResult: ', aiResult);
+
       setAiAnalysis(aiResult);
 
       // Добавяме изпращане към базата данни

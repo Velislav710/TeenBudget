@@ -99,7 +99,6 @@ const createAIanalysis = (
 };
 
 module.exports = {
-  db,
   checkEmailExists,
   createUser,
   findUserByEmail,
@@ -108,5 +107,5 @@ module.exports = {
   createTransaction,
   getTransactionsByUserId,
   deleteTransactionsByUserId,
-  createAIanalysis // Добавяме тук функцията
+  createAIanalysis
 };

@@ -25,7 +25,7 @@
     "app/src/lib.d.ts",
     "src/**/*.ts",
     "src/**/*.d.ts",
-    "vite-env.d.ts"
+    "src/vite-env.d.ts"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

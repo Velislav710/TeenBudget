@@ -11,7 +11,7 @@ export const fetchOpenAIResponse = async (
         Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4-turbo',
         messages: [
           {
             role: 'system',
@@ -68,15 +68,22 @@ export const fetchOpenAIResponse = async (
       throw new Error(`OpenAI API Error: ${response.status}`);
     }
 
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
-
-    return content ? JSON.parse(content) : null;
+    const responseData = await response.json();
+    const responseJson = responseData.choices[0]?.message?.content;
+    const unescapedData = responseJson
+      .replace(/^```json([\s\S]*?)```$/, '$1')
+      .replace(/^```JSON([\s\S]*?)```$/, '$1')
+      .replace(/^```([\s\S]*?)```$/, '$1')
+      .replace(/^'|'$/g, '')
+      .trim();
+    console.log('unescapedData: ', unescapedData);
+    return unescapedData;
   } catch (error) {
     console.error('AI Analysis Error:', error);
     return null;
   }
 };
+
 export const fetchBudgetPlanningAI = async (planningData: {
   expectedIncome: number;
   previousCategories: Record<string, number>;
@@ -89,7 +96,7 @@ export const fetchBudgetPlanningAI = async (planningData: {
         Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4-turbo',
         messages: [
           {
             role: 'system',
