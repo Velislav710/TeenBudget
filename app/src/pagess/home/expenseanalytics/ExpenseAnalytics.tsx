@@ -1,37 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '../../context/ThemeContext';
-import ThemeToggle from '../../components/ThemeToggle';
+import { useTheme } from '../../../context/ThemeContext';
+import ThemeToggle from '../../../components/ThemeToggle';
 import ApexCharts from 'react-apexcharts';
-import SideMenu from '../../components/SideMenu';
-import Footer from '../../components/Footerr/Footer';
-import { fetchExpenseAnalytics } from './helper-functions';
-
-interface Transaction {
-  id: number;
-  type: 'expense';
-  amount: number;
-  category: string;
-  description: string;
-  date: string;
-}
+import SideMenu from '../../../components/SideMenu';
+import Footer from '../../../components/Footerr/Footer';
+import { fetchExpenseAnalytics } from '../helper-functions';
+import { TimelineData, Transaction } from './expense-analytics-types';
+import {
+  getCategorySummary,
+  analyzeSpendingPatterns,
+  analyzeTrends,
+  prepareVisualizationData,
+} from './helper-functions';
 
 const ExpenseAnalytics = () => {
   const { isDarkMode } = useTheme();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedPeriod, setSelectedPeriod] = useState<number>(30);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
-  const [timelineData, setTimelineData] = useState<any>([]);
-  const [categoryTrends, setCategoryTrends] = useState<any>([]);
+  const [timelineData, setTimelineData] = useState<TimelineData[]>([]);
+  const selectedPeriod = 30;
 
-  const generateAnalysis = async () => {
-    setIsGeneratingAnalysis(true);
+  const fetchTransactionData = async (selectedPeriod: number) => {
     try {
       const token =
         localStorage.getItem('authToken') ||
         sessionStorage.getItem('authToken');
+
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/transactions`,
         {
@@ -45,17 +41,16 @@ const ExpenseAnalytics = () => {
       if (!response.ok) throw new Error('Failed to fetch transactions');
 
       const data = await response.json();
-
       const expenseTransactions = data.transactions.filter(
         (t: Transaction) => t.type === 'expense',
       );
 
       const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - selectedPeriod); // Ясно преобразуване в число
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - selectedPeriod);
 
       const filteredTransactions = expenseTransactions.filter(
         (t: Transaction) => {
-          const transactionDate = new Date(t.date); // Уверяваме се, че е Date обект
+          const transactionDate = new Date(t.date);
           return (
             !isNaN(transactionDate.getTime()) &&
             transactionDate >= thirtyDaysAgo
@@ -64,29 +59,53 @@ const ExpenseAnalytics = () => {
       );
 
       console.log('filteredTransactions: ', filteredTransactions);
-      setTransactions(filteredTransactions);
 
       const totalSpent = filteredTransactions.reduce(
         (sum, t) => sum + t.amount,
         0,
       );
+
       const totalBalance = data.transactions.reduce(
         (sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount),
         0,
       );
+
       const totalIncome = data.transactions
         .filter((t: { type: string }) => t.type === 'income')
         .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
 
+      return {
+        filteredTransactions,
+        totalSpent,
+        totalBalance,
+        totalIncome,
+        allTransactions: data.transactions,
+      };
+    } catch (error) {
+      console.error('Error fetching transaction data:', error);
+      throw error;
+    }
+  };
+
+  const generateAnalysis = async (selectedPeriod: number) => {
+    setIsGeneratingAnalysis(true);
+    try {
+      const token =
+        localStorage.getItem('authToken') ||
+        sessionStorage.getItem('authToken');
+
+      const { totalSpent, totalBalance, totalIncome } =
+        await fetchTransactionData(selectedPeriod);
+
       const analysisData = {
-        transactions: filteredTransactions,
+        transactions: transactions,
         period: selectedPeriod + ' days',
         totalSpent,
         totalBalance,
         totalIncome,
-        categorySummary: getCategorySummary(filteredTransactions),
-        spendingPatterns: analyzeSpendingPatterns(filteredTransactions),
-        trends: analyzeTrends(filteredTransactions),
+        categorySummary: getCategorySummary(transactions),
+        spendingPatterns: analyzeSpendingPatterns(transactions),
+        trends: analyzeTrends(transactions),
       };
 
       console.log('analysisData: ', analysisData);
@@ -95,7 +114,6 @@ const ExpenseAnalytics = () => {
 
       setAiAnalysis(aiResult);
 
-      // Добавяме изпращане към базата данни
       await fetch(`${import.meta.env.VITE_API_BASE_URL}/expense_analysis`, {
         method: 'POST',
         headers: {
@@ -121,78 +139,13 @@ const ExpenseAnalytics = () => {
         }),
       });
 
-      prepareVisualizationData(filteredTransactions);
       setIsGeneratingAnalysis(false);
       setLoading(false);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error generating analysis:', error);
       setIsGeneratingAnalysis(false);
       setLoading(false);
     }
-  };
-  useEffect(() => {
-    generateAnalysis();
-  }, [selectedPeriod]);
-
-  const getCategorySummary = (data: Transaction[]) => {
-    return data.reduce(
-      (acc, transaction) => {
-        acc[transaction.category] =
-          (acc[transaction.category] || 0) + transaction.amount;
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
-  };
-
-  const analyzeSpendingPatterns = (data: Transaction[]) => {
-    const patterns = {
-      weekday: {} as Record<string, number>,
-      hourly: {} as Record<string, number>,
-      weekly: {} as Record<string, number>,
-    };
-
-    data.forEach((transaction) => {
-      const date = new Date(transaction.date);
-      const weekday = date.toLocaleDateString('bg-BG', { weekday: 'long' });
-      const hour = date.getHours();
-      const week = Math.floor(date.getDate() / 7);
-
-      patterns.weekday[weekday] =
-        (patterns.weekday[weekday] || 0) + transaction.amount;
-      patterns.hourly[hour] = (patterns.hourly[hour] || 0) + transaction.amount;
-      patterns.weekly[week] = (patterns.weekly[week] || 0) + transaction.amount;
-    });
-
-    return patterns;
-  };
-
-  const analyzeTrends = (data: Transaction[]) => {
-    return data
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .map((t) => ({
-        x: new Date(t.date).getTime(),
-        y: t.amount,
-      }));
-  };
-
-  const prepareVisualizationData = (data: Transaction[]) => {
-    setTimelineData(analyzeTrends(data));
-    setCategoryTrends(prepareCategoryTrends(data));
-  };
-
-  const prepareCategoryTrends = (data: Transaction[]) => {
-    const categories = [...new Set(data.map((t) => t.category))];
-    return categories.map((category) => ({
-      name: category,
-      data: data
-        .filter((t) => t.category === category)
-        .map((t) => ({
-          x: new Date(t.date).getTime(),
-          y: t.amount,
-        }))
-        .sort((a, b) => a.x - b.x),
-    }));
   };
 
   const categoryTotals = transactions.reduce(
@@ -208,6 +161,18 @@ const ExpenseAnalytics = () => {
     (sum, amount) => sum + amount,
     0,
   );
+
+  useEffect(() => {
+    const fetchDatabaseTransactions = async () => {
+      const { filteredTransactions } = await fetchTransactionData(
+        selectedPeriod,
+      );
+      setTransactions(filteredTransactions);
+      prepareVisualizationData(transactions, setTimelineData);
+    };
+
+    fetchDatabaseTransactions();
+  }, []);
 
   return (
     <div
@@ -236,7 +201,7 @@ const ExpenseAnalytics = () => {
               <ThemeToggle />
             </div>
             <button
-              onClick={generateAnalysis}
+              onClick={() => generateAnalysis(selectedPeriod)}
               disabled={isGeneratingAnalysis}
               className={`px-6 py-3 rounded-lg ${
                 isDarkMode
@@ -262,7 +227,7 @@ const ExpenseAnalytics = () => {
             <>
               {aiAnalysis && (
                 <div
-                  className={`mb-8 p-6 rounded-xl ${
+                  className={`my-8 p-6 rounded-xl ${
                     isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
                   } backdrop-blur-sm shadow-sm`}
                 >
@@ -520,7 +485,7 @@ const ExpenseAnalytics = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 my-8">
                 <div
                   className={`p-6 rounded-xl ${
                     isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'

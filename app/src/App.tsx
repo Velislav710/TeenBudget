@@ -12,7 +12,7 @@ import Resetbasic from './pagess/authentication/Resetbasic';
 import Contact from './pagess/contact/Contact';
 import BudgetPlanning from './pagess/home/BudgetPlanning';
 import SavingsGoals from './pagess/home/SavingsGoals';
-import ExpenseAnalytics from './pagess/home/ExpenseAnalytics';
+import ExpenseAnalytics from './pagess/home/expenseanalytics/ExpenseAnalytics';
 import FinancialEducation from './pagess/home/FinancialEducation';
 import Reports from './pagess/home/Reports';
 import Settings from './pagess/home/Settings';

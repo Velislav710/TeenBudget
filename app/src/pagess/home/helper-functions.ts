@@ -122,32 +122,32 @@ export const fetchExpenseAnalytics = async (
             {
               "analysis": {
                 "overallSummary": {
-                  "mainFindings": "подробно обобщение на финансовото състояние в поне 300 думи",
-                  "keyInsights": ["5 ключови извода с конкретни числа и проценти"],
+                  "mainFindings": "подробно обобщение на финансовото състояние в поне 150 думи",
+                  "keyInsights": ["3 ключови извода с конкретни числа и проценти"],
                   "riskAreas": ["3 рискови области с подробно обяснение"]
                 },
                 "categoryAnalysis": {
                   "topCategory": "най-голяма категория разходи с подробен анализ",
                   "categoryBreakdown": [{
                     "category": "име на категория",
-                    "analysis": "200 думи анализ за всяка категория",
+                    "analysis": "100 думи анализ за всяка категория",
                     "trends": "детайлни тенденции",
                     "recommendations": ["3 конкретни препоръки"]
                   }]
                 },
                 "behavioralInsights": {
-                  "spendingPatterns": "подробен анализ на моделите на харчене в 200 думи",
-                  "emotionalTriggers": ["5 емоционални тригера за харчене"],
+                  "spendingPatterns": "подробен анализ на моделите на харчене в 100 думи",
+                  "emotionalTriggers": ["3 емоционални тригера за харчене"],
                   "socialFactors": "влияние на социалната среда върху харченето"
                 },
                 "detailedRecommendations": {
-                  "immediate": ["5 спешни действия с обяснение"],
-                  "shortTerm": ["5 краткосрочни препоръки"],
-                  "longTerm": ["5 дългосрочни стратегии"]
+                  "immediate": ["3 спешни действия с обяснение"],
+                  "shortTerm": ["3 краткосрочни препоръки"],
+                  "longTerm": ["3 дългосрочни стратегии"]
                 },
                 "educationalGuidance": {
-                  "financialLiteracy": "200 думи образователни насоки",
-                  "practicalSkills": ["5 практически умения за развиване"],
+                  "financialLiteracy": "100 думи образователни насоки",
+                  "practicalSkills": ["3 практически умения за развиване"],
                   "resources": ["3 препоръчани ресурса за обучение"]
                 },
                 "futureProjections": {
@@ -181,6 +181,7 @@ export const fetchExpenseAnalytics = async (
       .trim();
 
     const parsedData = JSON.parse(unescapedData);
+    console.log('transaction data bs', transactionData);
     return parsedData;
   } catch (error) {
     console.error('AI Analysis Error:', error);
