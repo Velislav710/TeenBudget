@@ -6,6 +6,9 @@ import ApexCharts from 'react-apexcharts';
 import SideMenu from '../../components/SideMenu';
 import Footer from '../../components/Footerr/Footer';
 import { fetchDashboardAnalysis } from './helper-functions';
+import { IoMdTrendingUp } from 'react-icons/io';
+import { BiCategoryAlt } from 'react-icons/bi';
+import { MdTipsAndUpdates } from 'react-icons/md';
 
 const categories = {
   income: ['Джобни', 'Подарък', 'Стипендия', 'Работа', 'Други'],
@@ -450,7 +453,7 @@ const ECommerce = () => {
               </div>
             </div>
             {aiAnalysis && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="mb-8 grid grid-cols-1 gap-6">
                 <div
                   className={`col-span-2 p-6 rounded-lg ${
                     isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
@@ -470,9 +473,7 @@ const ECommerce = () => {
                       <h4 className="font-medium mb-2">Месечна тенденция</h4>
                       <div className="flex items-center gap-2">
                         <span className="material-icons text-emerald-400">
-                          {aiAnalysis.monthlyTrend.includes('повече')
-                            ? 'trending_up'
-                            : 'trending_down'}
+                          <IoMdTrendingUp />
                         </span>
                         <span>{aiAnalysis.monthlyTrend}</span>
                       </div>
@@ -486,7 +487,7 @@ const ECommerce = () => {
                       <h4 className="font-medium mb-2">Топ категория</h4>
                       <div className="flex items-center gap-2">
                         <span className="material-icons text-sky-400">
-                          category
+                          <BiCategoryAlt />
                         </span>
                         <span>{aiAnalysis.topCategory}</span>
                       </div>
@@ -500,7 +501,7 @@ const ECommerce = () => {
                     {aiAnalysis.recommendations.map((rec, index) => (
                       <li key={index} className="flex items-start gap-3">
                         <span className="material-icons text-violet-400">
-                          tips_and_updates
+                          <MdTipsAndUpdates />
                         </span>
                         <span>{rec}</span>
                       </li>

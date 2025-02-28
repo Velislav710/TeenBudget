@@ -188,10 +188,18 @@ export const fetchBudgetPlanningAI = async (planningData: {
       throw new Error(`OpenAI API Error: ${response.status}`);
     }
 
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
+    const responseData = await response.json();
+    const responseJson = responseData.choices[0]?.message?.content;
+    const unescapedData = responseJson
+      .replace(/^```json([\s\S]*?)```$/, '$1')
+      .replace(/^```JSON([\s\S]*?)```$/, '$1')
+      .replace(/^```([\s\S]*?)```$/, '$1')
+      .replace(/^'|'$/g, '')
+      .trim();
 
-    return content ? JSON.parse(content) : null;
+    const parsedData = JSON.parse(unescapedData);
+
+    return parsedData;
   } catch (error) {
     console.error('AI Analysis Error:', error);
     return null;
