@@ -5,7 +5,10 @@ import ThemeToggle from '../../components/ThemeToggle';
 import ApexCharts from 'react-apexcharts';
 import SideMenu from '../../components/SideMenu';
 import Footer from '../../components/Footerr/Footer';
-import { fetchDashboardAnalysis } from './helper-functions';
+import {
+  fetchDashboardAnalysis,
+  saveDashboardAnalysis,
+} from './helper-functions';
 import { IoMdTrendingUp } from 'react-icons/io';
 import { BiCategoryAlt } from 'react-icons/bi';
 import { MdTipsAndUpdates } from 'react-icons/md';
@@ -206,6 +209,7 @@ const ECommerce = () => {
       const aiResponseFromOpenAI = await fetchDashboardAnalysis(analysisData);
       if (aiResponseFromOpenAI) {
         setAiAnalysis(aiResponseFromOpenAI.analysis);
+        saveDashboardAnalysis(aiResponseFromOpenAI.analysis);
       }
     } catch (error) {
       console.error('AI Analysis Error:', error);

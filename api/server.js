@@ -425,6 +425,44 @@ app.delete("/transactions", (req, res) => {
   });
 });
 
+app.post("/dashboard_analysis", (req, res) => {
+  const {
+    summary,
+    recommendations,
+    savingsPotential,
+    monthlyTrend,
+    topCategory
+  } = req.body;
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding);
+  }
+
+  const decodedToken = atob(base64Url);
+
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(401).json({ error: "Невалиден токен" });
+    const userId = decoded.id;
+
+    db.insertDashboardAnalysis(
+      userId,
+      { summary, recommendations, savingsPotential, monthlyTrend, topCategory },
+      (err, result) => {
+        if (err)
+          return res.status(500).json({ error: "Грешка в базата данни" });
+        res.json({ message: "Финансовият анализ е добавен успешно" });
+      }
+    );
+  });
+});
+
 app.post("/expense_analysis", (req, res) => {
   const {
     total_income,

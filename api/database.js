@@ -67,6 +67,25 @@ const deleteTransactionsByUserId = (userId, callback) => {
   db.query(query, [userId], callback);
 };
 
+const insertDashboardAnalysis = (userId, data, callback) => {
+  const query = `
+    INSERT INTO dashboard_analysis 
+    (user_id, summary, recommendations, savings_potential, monthly_trend, top_category) 
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
+
+  const values = [
+    userId,
+    data.summary,
+    JSON.stringify(data.recommendations), // Store as JSON string
+    data.savingsPotential,
+    data.monthlyTrend,
+    data.topCategory
+  ];
+
+  db.query(query, values, callback);
+};
+
 const createAIanalysis = (
   userId,
   total_income,
@@ -107,5 +126,6 @@ module.exports = {
   createTransaction,
   getTransactionsByUserId,
   deleteTransactionsByUserId,
+  insertDashboardAnalysis,
   createAIanalysis
 };

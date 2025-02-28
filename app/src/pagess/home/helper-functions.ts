@@ -1,4 +1,105 @@
-import { TransactionAnalysisData } from './home-types';
+import { DashboardAnalysis, TransactionAnalysisData } from './home-types';
+
+export const fetchDashboardAnalysis = async (
+  transactionData: TransactionAnalysisData,
+) => {
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: `Ти си професионален финансов анализатор за тийнейджъри. Анализирай финансовите данни и създай полезни препоръки на книжовен български език. Отговаряй само в следния JSON формат:
+            {
+              "analysis": {
+                "summary": "Подробно обобщение на финансовото състояние",
+                "recommendations": ["3 конкретни и практични препоръки"],
+                "savingsPotential": "процент възможни спестявания (число)",
+                "monthlyTrend": "тенденция спрямо предходен период",
+                "topCategory": "категорията с най-много транзакции"
+              }
+            }`,
+          },
+          {
+            role: 'user',
+            content: `Анализирай следните финансови данни и дай конкретни препоръки:
+            ${JSON.stringify(transactionData, null, 2)}`,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API Error: ${response.status}`);
+    }
+
+    // --- TESTING: ---
+    // const data =
+    //   '{\n  "analysis": {\n    "summary": "Общите приходи за периода са 158 лева, при разходи от 55 лева, което остава баланс от 103 лева. Спестяване от 65.2% е отличен резултат. Най-голямата част от приходите са от категория \'Работа\', а най-големите разходи са за \'Храна\'.",\n    "recommendations": ["Създайте бюджет за храна, тъй като това е най-голямата ви категория за разходи.", "Поддържайте високата си степен на спестяване, като продължите да контролирате разходите си.", "Опитайте да увеличите приходите си от \'Джобни\', възможно е да има потенциал за повече доходи там."],\n    "savingsPotential": "34.8",\n    "monthlyTrend": "Приходите и разходите са се увеличили спрямо предходния период, но спестяванията са също увеличени, което е положително.",\n    "topCategory": "Храна"\n  }\n}';
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+
+    return content ? JSON.parse(content) : null;
+  } catch (error) {
+    console.error('AI Analysis Error:', error);
+    return null;
+  }
+};
+
+export const saveDashboardAnalysis = async ({
+  userId,
+  summary,
+  recommendations,
+  savingsPotential,
+  monthlyTrend,
+  topCategory,
+  date,
+}: DashboardAnalysis) => {
+  try {
+    const token =
+      localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+
+    // Изпращаме POST заявка до сървъра за запис на анализите
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/dashboard_analysis`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId,
+          summary,
+          recommendations,
+          savingsPotential,
+          monthlyTrend,
+          topCategory,
+          date,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error('Грешка при записване на анализа');
+    }
+
+    const responseJson = await response.json();
+    console.log('Записът на анализа беше успешен:', responseJson);
+    return responseJson;
+  } catch (error) {
+    console.error('Грешка при записа на анализа:', error);
+    return { error: 'Грешка при записа на анализа' };
+  }
+};
 
 export const fetchExpenseAnalytics = async (
   transactionData: TransactionAnalysisData,
@@ -79,57 +180,6 @@ export const fetchExpenseAnalytics = async (
 
     const parsedData = JSON.parse(unescapedData);
     return parsedData;
-  } catch (error) {
-    console.error('AI Analysis Error:', error);
-    return null;
-  }
-};
-
-export const fetchDashboardAnalysis = async (
-  transactionData: TransactionAnalysisData,
-) => {
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: `Ти си професионален финансов анализатор за тийнейджъри. Анализирай финансовите данни и създай полезни препоръки на книжовен български език. Отговаряй само в следния JSON формат:
-            {
-              "analysis": {
-                "summary": "Подробно обобщение на финансовото състояние",
-                "recommendations": ["3 конкретни и практични препоръки"],
-                "savingsPotential": "процент възможни спестявания (число)",
-                "monthlyTrend": "тенденция спрямо предходен период",
-                "topCategory": "категорията с най-много транзакции"
-              }
-            }`,
-          },
-          {
-            role: 'user',
-            content: `Анализирай следните финансови данни и дай конкретни препоръки:
-            ${JSON.stringify(transactionData, null, 2)}`,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API Error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
-
-    return content ? JSON.parse(content) : null;
   } catch (error) {
     console.error('AI Analysis Error:', error);
     return null;
