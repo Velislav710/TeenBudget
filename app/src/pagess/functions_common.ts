@@ -20,7 +20,7 @@ export const checkTokenValidity = async (): Promise<string | null> => {
   try {
     // Изпращане на заявка за валидиране на токена
     const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/token-validation`,
+      `${(import.meta as any).env.VITE_API_BASE_URL}/token-validation`,
       {
         method: 'POST',
         headers: {

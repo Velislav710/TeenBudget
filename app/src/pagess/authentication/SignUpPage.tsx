@@ -50,7 +50,7 @@ const SignUpPage = () => {
         });
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/signup`,
+          `${(import.meta as any).env.VITE_API_BASE_URL}/signup`,
           {
             method: 'POST',
             headers: {
@@ -87,7 +87,7 @@ const SignUpPage = () => {
       if (token) {
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL}/token-validation`,
+            `${(import.meta as any).env.VITE_API_BASE_URL}/token-validation`,
             {
               method: 'POST',
               headers: {

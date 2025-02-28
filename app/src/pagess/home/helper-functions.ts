@@ -12,7 +12,7 @@ export const fetchDashboardAnalysis = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+        Authorization: `Bearer ${(import.meta as any).env.VITE_OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4',
@@ -72,7 +72,7 @@ export const saveDashboardAnalysis = async ({
 
     // Изпращаме POST заявка до сървъра за запис на анализите
     const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/save-dashboard-analysis`,
+      `${(import.meta as any).env.VITE_API_BASE_URL}/save-dashboard-analysis`,
       {
         method: 'POST',
         headers: {
@@ -111,7 +111,7 @@ export const fetchExpenseAnalytics = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+        Authorization: `Bearer ${(import.meta as any).env.VITE_OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4',
@@ -198,7 +198,7 @@ export const fetchFinancialAnalysisAI = async (planningData: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+        Authorization: `Bearer ${(import.meta as any).env.VITE_OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4',
@@ -269,7 +269,7 @@ export const saveFinancialAnalysis = async ({
 
     // Sending POST request to the server to save the financial analysis
     const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/save-financial-analysis`,
+      `${(import.meta as any).env.VITE_API_BASE_URL}/save-financial-analysis`,
       {
         method: 'POST',
         headers: {
@@ -320,7 +320,7 @@ export const generateAIAnalysis = async (goalData: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+        Authorization: `Bearer ${(import.meta as any).env.VITE_OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4',

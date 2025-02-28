@@ -93,7 +93,7 @@ const ECommerce = () => {
         }
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/transactions`,
+          `${(import.meta as any).env.VITE_API_BASE_URL}/transactions`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -257,7 +257,7 @@ const ECommerce = () => {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/transactions`,
+        `${(import.meta as any).env.VITE_API_BASE_URL}/transactions`,
         {
           method: 'POST',
           headers: {

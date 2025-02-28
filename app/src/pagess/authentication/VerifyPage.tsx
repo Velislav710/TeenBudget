@@ -57,7 +57,7 @@ const VerifyPage = ({}: {}) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/verify-email`,
+        `${(import.meta as any).env.VITE_API_BASE_URL}/verify-email`,
         {
           method: 'POST',
           headers: {
@@ -100,7 +100,7 @@ const VerifyPage = ({}: {}) => {
     setIsResending(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/resend-code`,
+        `${(import.meta as any).env.VITE_API_BASE_URL}/resend-code`,
         {
           method: 'POST',
           headers: {
