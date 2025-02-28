@@ -114,30 +114,33 @@ const ExpenseAnalytics = () => {
 
       setAiAnalysis(aiResult);
 
-      await fetch(`${import.meta.env.VITE_API_BASE_URL}/expense_analysis`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/save-expense-analysis`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            total_income: analysisData.totalIncome,
+            total_expense: analysisData.totalSpent,
+            total_balance: analysisData.totalBalance,
+            savings_rate:
+              ((analysisData.totalIncome - analysisData.totalSpent) /
+                analysisData.totalIncome) *
+              100,
+            main_findings: aiResult.analysis.overallSummary.mainFindings,
+            key_insights: JSON.stringify(
+              aiResult.analysis.overallSummary.keyInsights,
+            ),
+            risk_areas: JSON.stringify(
+              aiResult.analysis.overallSummary.riskAreas,
+            ),
+            date: new Date(),
+          }),
         },
-        body: JSON.stringify({
-          total_income: analysisData.totalIncome,
-          total_expense: analysisData.totalSpent,
-          total_balance: analysisData.totalBalance,
-          savings_rate:
-            ((analysisData.totalIncome - analysisData.totalSpent) /
-              analysisData.totalIncome) *
-            100,
-          main_findings: aiResult.analysis.overallSummary.mainFindings,
-          key_insights: JSON.stringify(
-            aiResult.analysis.overallSummary.keyInsights,
-          ),
-          risk_areas: JSON.stringify(
-            aiResult.analysis.overallSummary.riskAreas,
-          ),
-          date: new Date(),
-        }),
-      });
+      );
 
       setIsGeneratingAnalysis(false);
       setLoading(false);
