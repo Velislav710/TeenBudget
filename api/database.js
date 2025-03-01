@@ -153,35 +153,109 @@ const createAIanalysis = (
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
-  db.query(
-    query,
-    [
-      userId,
-      total_income,
-      total_expense,
-      total_balance,
-      savings_rate,
-      main_findings,
-      key_insights,
-      risk_areas,
-      top_category,
-      category_breakdown,
-      spending_patterns,
-      emotional_triggers,
-      social_factors,
-      immediate_recommendations,
-      short_term_recommendations,
-      long_term_recommendations,
-      financial_literacy,
-      practical_skills,
-      resources,
-      next_month_future_projection,
-      three_month_future_projection,
-      savings_potential_future_projection,
-      date
-    ],
-    callback
-  );
+  const values = [
+    userId,
+    total_income,
+    total_expense,
+    total_balance,
+    savings_rate,
+    main_findings,
+    key_insights,
+    risk_areas,
+    top_category,
+    category_breakdown,
+    spending_patterns,
+    emotional_triggers,
+    social_factors,
+    immediate_recommendations,
+    short_term_recommendations,
+    long_term_recommendations,
+    financial_literacy,
+    practical_skills,
+    resources,
+    next_month_future_projection,
+    three_month_future_projection,
+    savings_potential_future_projection,
+    date
+  ];
+
+  console.log("Executing Query: ", query);
+  console.log("With Values: ", values);
+
+  db.query(query, values, (error, results) => {
+    if (error) {
+      console.error("Database Error:", error);
+      return callback(error, null);
+    }
+    console.log("Insert Successful:", results);
+    callback(null, results);
+  });
+};
+
+const getLastAIanalysis = (userId, callback) => {
+  const query = `
+    SELECT main_findings, 
+      key_insights, risk_areas, top_category, category_breakdown, spending_patterns, 
+      emotional_triggers, social_factors, immediate_recommendations, short_term_recommendations, 
+      long_term_recommendations, financial_literacy, practical_skills, resources, 
+      next_month_future_projection, three_month_future_projection, savings_potential_future_projection
+    FROM expense_analysis
+    WHERE user_id = ?
+    ORDER BY date DESC
+    LIMIT 1;
+  `;
+
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error("DB Query Error:", err);
+      return callback(err, null);
+    }
+
+    if (!results.length) return callback(null, null);
+
+    const analysis = results[0];
+
+    try {
+      const formattedAnalysis = {
+        analysis: {
+          overallSummary: {
+            main_findings: analysis.main_findings,
+            key_insights: JSON.parse(analysis.key_insights || "{}"),
+            risk_areas: JSON.parse(analysis.risk_areas || "{}")
+          },
+          categoryAnalysis: {
+            topCategory: analysis.top_category,
+            categoryBreakdown: JSON.parse(analysis.category_breakdown || "{}")
+          },
+          behavioralInsights: {
+            spendingPatterns: analysis.spending_patterns,
+            emotionalTriggers: JSON.parse(analysis.emotional_triggers || "{}"),
+            socialFactors: analysis.social_factors
+          },
+          detailedRecommendations: {
+            immediate: JSON.parse(analysis.immediate_recommendations || "{}"),
+            shortTerm: JSON.parse(analysis.short_term_recommendations || "{}"),
+            longTerm: JSON.parse(analysis.long_term_recommendations || "{}")
+          },
+          educationalGuidance: {
+            financialLiteracy: analysis.financial_literacy,
+            practicalSkills: JSON.parse(analysis.practical_skills || "{}"),
+            resources: JSON.parse(analysis.resources || "{}")
+          },
+          futureProjections: {
+            nextMonth: analysis.next_month_future_projection,
+            threeMonths: analysis.three_month_future_projection,
+            savingsPotential: analysis.savings_potential_future_projection
+          }
+        }
+      };
+
+      callback(null, formattedAnalysis);
+    } catch (parseError) {
+      console.error("Error parsing JSON from DB:", parseError);
+      callback(parseError, null);
+    }
+  });
 };
 
 module.exports = {
@@ -195,5 +269,6 @@ module.exports = {
   deleteTransactionsByUserId,
   insertDashboardAnalysis,
   insertFinancialAnalysis,
-  createAIanalysis
+  createAIanalysis,
+  getLastAIanalysis
 };

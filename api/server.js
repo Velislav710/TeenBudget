@@ -496,10 +496,16 @@ app.post("/save-expense-analysis", (req, res) => {
       return res.status(401).json({ error: "Не е предоставен токен" });
     }
 
-    jwt.verify(token, SECRET_KEY, (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ error: "Невалиден токен" });
-      }
+    let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = base64Url.length % 4;
+    if (padding) {
+      base64Url += "=".repeat(4 - padding);
+    }
+
+    const decodedToken = atob(base64Url);
+
+    jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+      if (err) return res.status(401).json({ error: "Невалиден токен" });
 
       const userId = decoded.id;
 
@@ -586,6 +592,43 @@ app.post("/save-financial-analysis", (req, res) => {
       }
     );
   });
+});
+
+app.get("/get-last-expense-analysis", (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding);
+  }
+
+  const decodedToken = atob(base64Url);
+
+  try {
+    jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+      const userId = decoded.id;
+
+      db.getLastAIanalysis(userId, (err, result) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Грешка в базата данни" });
+        }
+
+        if (!result || result.length === 0) {
+          return res.status(404).json({ error: "Няма записан анализ" });
+        }
+        res.json(result);
+      });
+    });
+  } catch (error) {
+    console.error("JWT error:", error);
+    return res.status(401).json({ error: "Невалиден токен" });
+  }
 });
 
 app.listen(5000, () => {

@@ -4,274 +4,22 @@ import ThemeToggle from '../../../components/ThemeToggle';
 import ApexCharts from 'react-apexcharts';
 import SideMenu from '../../../components/SideMenu';
 import Footer from '../../../components/Footerr/Footer';
-import { fetchExpenseAnalytics } from '../helper-functions';
 import { TimelineData, Transaction } from './expense-analytics-types';
 import {
-  getCategorySummary,
-  analyzeSpendingPatterns,
   analyzeTrends,
-  prepareVisualizationData,
+  fetchLastAIAnalysis,
+  fetchTransactionData,
+  generateAnalysis,
 } from './helper-functions';
 
 const ExpenseAnalytics = () => {
   const { isDarkMode } = useTheme();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<any>({});
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [timelineData, setTimelineData] = useState<TimelineData[]>([]);
   const selectedPeriod = 30;
-
-  const fetchTransactionData = async (selectedPeriod: number) => {
-    try {
-      const token =
-        localStorage.getItem('authToken') ||
-        sessionStorage.getItem('authToken');
-
-      const response = await fetch(
-        `${(import.meta as any).env.VITE_API_BASE_URL}/transactions`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      if (!response.ok) throw new Error('Failed to fetch transactions');
-
-      const data = await response.json();
-      const expenseTransactions = data.transactions.filter(
-        (t: Transaction) => t.type === 'expense',
-      );
-
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - selectedPeriod);
-
-      const filteredTransactions = expenseTransactions.filter(
-        (t: Transaction) => {
-          const transactionDate = new Date(t.date);
-          return (
-            !isNaN(transactionDate.getTime()) &&
-            transactionDate >= thirtyDaysAgo
-          );
-        },
-      );
-
-      console.log('filteredTransactions: ', filteredTransactions);
-
-      const totalSpent = filteredTransactions.reduce(
-        (sum, t) => sum + t.amount,
-        0,
-      );
-
-      const totalBalance = data.transactions.reduce(
-        (sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount),
-        0,
-      );
-
-      const totalIncome = data.transactions
-        .filter((t: { type: string }) => t.type === 'income')
-        .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
-
-      return {
-        filteredTransactions,
-        totalSpent,
-        totalBalance,
-        totalIncome,
-        allTransactions: data.transactions,
-      };
-    } catch (error) {
-      console.error('Error fetching transaction data:', error);
-      throw error;
-    }
-  };
-
-  const generateAnalysis = async (selectedPeriod: number) => {
-    setIsGeneratingAnalysis(true);
-    try {
-      const token =
-        localStorage.getItem('authToken') ||
-        sessionStorage.getItem('authToken');
-
-      const { totalSpent, totalBalance, totalIncome } =
-        await fetchTransactionData(selectedPeriod);
-
-      const analysisData = {
-        transactions: transactions,
-        period: selectedPeriod + ' days',
-        totalSpent,
-        totalBalance,
-        totalIncome,
-        categorySummary: getCategorySummary(transactions),
-        spendingPatterns: analyzeSpendingPatterns(transactions),
-        trends: analyzeTrends(transactions),
-      };
-
-      console.log('analysisData: ', analysisData);
-      const aiResult = {
-        analysis: {
-          overallSummary: {
-            mainFindings:
-              'Извършен е анализ на финансовите постижения на тийнейджър за периода от 30 дни. Сумата от всехидни разходи е 50 лв., което представлява близо 31,65% от тоталния приход за същия период (158 лв.). Най-голямата категория разходи е свързана с храната. Интересно е, че всички разходи са направени в петък вследствие на една транзакция в полунощ.',
-            keyInsights: [
-              'Общите разходи за периода са 50 лв.',
-              '31,65% от приходите са изразходвани.',
-              'Всички разходи са направени в петък на полунощ.',
-            ],
-            riskAreas: [
-              'Фокусирането на разходите в един единствен ден от седмицата може да доведе до недостатъчност на финансите в останалите дни.',
-              ' Всички разходи са причинени от един вид консумация – хранене.',
-              'Направените разходи са концентрирани в едно определено часово интервало (полунощ), което може да ограничи флексибилността при други евентуални нужди.',
-            ],
-          },
-          categoryAnalysis: {
-            topCategory: 'Храна',
-            categoryBreakdown: [
-              {
-                category: 'Храна',
-                analysis:
-                  'Тийнейджърът е харчил всичките си средства за храна. Това може да е рационално, ако средствата са били използвани за покупка на бълк храна или други необходимости за пълноценно питане през един или повече дни и ако други основни нужди като дрехи, транспорт и др. са удовлетворени чрез други източници на финансиране или са обеспечени по друг начин.',
-                trends:
-                  'Има консистентен тенд към потребление цялата своя наличност на пари за храна.',
-                recommendations: [
-                  'Разнообразяване на разходите в рамките на седмицата.',
-                  'Разходите да бъдат разпределени между различни категории за по-голям баланс.',
-                  'Избягване на покупките в късни часове, за да се има по-голяма финансова гъвкавост през деня.',
-                ],
-              },
-            ],
-          },
-          behavioralInsights: {
-            spendingPatterns:
-              'В цялостните навици за харчене се забелязва модел на концентриране на разходите върху една категория (храна) и в определен ден от седмицата (петък). Това могат да бъдат знаци за липса на разнообразие и баланс в разходите и на потребление на продуктите на веднъж.',
-            emotionalTriggers: [
-              'Свързаност с края на работната седмица (петък).',
-              'Желание за удоволствие от храна след работната седмица.',
-              'Потребление на храна като механизъм за справяне със стреса.',
-            ],
-            socialFactors:
-              'Уикендът може да бъде период, през който тийнейджърите провеждат повече социална активност и по този начин покачват своите разходи по храна.',
-          },
-          detailedRecommendations: {
-            immediate: [
-              'Създаване на ежеседмичен бюджет за категориата храна.',
-              'Разнообразяване на дните, в които се правят покупки.',
-              'Приоритизиране на нуждите, като се взимат предвид и други категории разходи извън храна.',
-            ],
-            shortTerm: [
-              'Опитване на различни стратегии за пазаруване.',
-              'Постепенно намаляне на разходите за храна, за да се осигури пари за други категории.',
-              'Инвестиране в обучение по финансово планиране.',
-            ],
-            longTerm: [
-              'Разработване на сберегателен план.',
-              'Успоредно влагане в умения за печелене на повече приходи.',
-              'Създаване на дългосрочен план за разходи, включващ различни категории.',
-            ],
-          },
-          educationalGuidance: {
-            financialLiteracy:
-              'Важно е тийнейджърът да разбере как седмичното и месечното планиране на бюджета могат да помогнат за постигане на по-добър финансов баланс и за намаляване на риска от изчерпване на средствата през началото на периода. Финансовата грамотност включва и разбирането на важността от разпределяне на разходите между различни категории и избягването на прекомерни разходи в определени дни или часове от деня.',
-            practicalSkills: [
-              'Управление на бюджет.',
-              'Планиране на разходи.',
-              'Разбиране на впливащи фактори върху разходите.',
-            ],
-            resources: [
-              'Финансови планиращи инструменти.',
-              'Книги и онлайн курсове по финансово образование.',
-              'Ментори и консултанти по финанси.',
-            ],
-          },
-          futureProjections: {
-            nextMonth:
-              'Ако същото поведение продължи, тийнейджърът вероятно ще изпита същите променливи финансови резултати през следващия месец.',
-            threeMonths:
-              'Ако не въведе промени в своите финансови навици, той може да се сблъска с многократно повтаряне на същите проблеми и да бъде изправен пред финансови трудности.',
-            savingsPotential:
-              'Ако тийнейджърът можете да намали 20% от своите разходи за храна всеки месец, той може да спести 10 лв. от бюджета си за храна само за пръв месец, или общо 30 лв. за три месеца.',
-          },
-        },
-      };
-      console.log('token: ', token);
-
-      setAiAnalysis(aiResult);
-
-      await fetch(
-        `${(import.meta as any).env.VITE_API_BASE_URL}/save-expense-analysis`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            total_income: analysisData.totalIncome,
-            total_expense: analysisData.totalSpent,
-            total_balance: analysisData.totalBalance,
-            savings_rate:
-              ((analysisData.totalIncome - analysisData.totalSpent) /
-                analysisData.totalIncome) *
-              100,
-            main_findings: aiResult.analysis.overallSummary.mainFindings,
-            key_insights: JSON.stringify(
-              aiResult.analysis.overallSummary.keyInsights,
-            ),
-            risk_areas: JSON.stringify(
-              aiResult.analysis.overallSummary.riskAreas,
-            ),
-
-            top_category: aiResult.analysis.categoryAnalysis.topCategory,
-            category_breakdown: JSON.stringify(
-              aiResult.analysis.categoryAnalysis.categoryBreakdown,
-            ),
-
-            spending_patterns:
-              aiResult.analysis.behavioralInsights.spendingPatterns,
-            emotional_triggers: JSON.stringify(
-              aiResult.analysis.behavioralInsights.emotionalTriggers,
-            ),
-            social_factors: aiResult.analysis.behavioralInsights.socialFactors,
-
-            immediate_recommendations: JSON.stringify(
-              aiResult.analysis.detailedRecommendations.immediate,
-            ),
-            short_term_recommendations: JSON.stringify(
-              aiResult.analysis.detailedRecommendations.shortTerm,
-            ),
-            long_term_recommendations: JSON.stringify(
-              aiResult.analysis.detailedRecommendations.longTerm,
-            ),
-
-            financial_literacy:
-              aiResult.analysis.educationalGuidance.financialLiteracy,
-
-            practical_skills: JSON.stringify(
-              aiResult.analysis.educationalGuidance.practicalSkills,
-            ),
-            resources: JSON.stringify(
-              aiResult.analysis.educationalGuidance.resources,
-            ),
-            next_month_future_projection:
-              aiResult.analysis.futureProjections.nextMonth,
-            three_month_future_projection:
-              aiResult.analysis.futureProjections.threeMonths,
-            savings_potential_future_projection:
-              aiResult.analysis.futureProjections.savingsPotential,
-            date: new Date(),
-          }),
-        },
-      );
-
-      setIsGeneratingAnalysis(false);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error generating analysis:', error);
-      setIsGeneratingAnalysis(false);
-      setLoading(false);
-    }
-  };
 
   const categoryTotals = transactions.reduce(
     (acc, transaction) => {
@@ -292,8 +40,10 @@ const ExpenseAnalytics = () => {
       const { filteredTransactions } = await fetchTransactionData(
         selectedPeriod,
       );
+      const analyisis = await fetchLastAIAnalysis();
+      setAiAnalysis(analyisis);
       setTransactions(filteredTransactions);
-      prepareVisualizationData(transactions, setTimelineData);
+      setTimelineData(analyzeTrends(filteredTransactions));
     };
 
     fetchDatabaseTransactions();
@@ -326,7 +76,15 @@ const ExpenseAnalytics = () => {
               <ThemeToggle />
             </div>
             <button
-              onClick={() => generateAnalysis(selectedPeriod)}
+              onClick={() =>
+                generateAnalysis(
+                  selectedPeriod,
+                  setIsGeneratingAnalysis,
+                  setLoading,
+                  setAiAnalysis,
+                  transactions,
+                )
+              }
               disabled={isGeneratingAnalysis}
               className={`px-6 py-3 rounded-lg ${
                 isDarkMode
@@ -374,7 +132,7 @@ const ExpenseAnalytics = () => {
                         Обобщение на финансовото състояние
                       </h3>
                       <p className="text-lg mb-6">
-                        {aiAnalysis.analysis.overallSummary.mainFindings}
+                        {aiAnalysis?.analysis?.overallSummary?.mainFindings}
                       </p>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -383,7 +141,7 @@ const ExpenseAnalytics = () => {
                             Ключови изводи
                           </h4>
                           <ul className="space-y-2">
-                            {aiAnalysis.analysis.overallSummary.keyInsights.map(
+                            {aiAnalysis?.analysis?.overallSummary?.keyInsights?.map(
                               (insight: string, index: number) => (
                                 <li
                                   key={index}
@@ -402,7 +160,7 @@ const ExpenseAnalytics = () => {
                             Рискови области
                           </h4>
                           <ul className="space-y-2">
-                            {aiAnalysis.analysis.overallSummary.riskAreas.map(
+                            {aiAnalysis?.analysis?.overallSummary?.riskAreas?.map(
                               (risk: string, index: number) => (
                                 <li
                                   key={index}
@@ -427,7 +185,7 @@ const ExpenseAnalytics = () => {
                         Анализ по категории
                       </h3>
                       <div className="space-y-6">
-                        {aiAnalysis.analysis.categoryAnalysis.categoryBreakdown.map(
+                        {aiAnalysis?.analysis?.categoryAnalysis?.categoryBreakdown?.map(
                           (category: any, index: number) => (
                             <div
                               key={index}
@@ -441,7 +199,7 @@ const ExpenseAnalytics = () => {
                                 {category.trends}
                               </p>
                               <ul className="space-y-2">
-                                {category.recommendations.map(
+                                {category.recommendations?.map(
                                   (rec: string, idx: number) => (
                                     <li
                                       key={idx}
@@ -471,8 +229,8 @@ const ExpenseAnalytics = () => {
                       </h3>
                       <p className="mb-6">
                         {
-                          aiAnalysis.analysis.behavioralInsights
-                            .spendingPatterns
+                          aiAnalysis?.analysis?.behavioralInsights
+                            ?.spendingPatterns
                         }
                       </p>
 
@@ -482,7 +240,7 @@ const ExpenseAnalytics = () => {
                             Емоционални тригери
                           </h4>
                           <ul className="space-y-2">
-                            {aiAnalysis.analysis.behavioralInsights.emotionalTriggers.map(
+                            {aiAnalysis?.analysis?.behavioralInsights?.emotionalTriggers?.map(
                               (trigger: string, index: number) => (
                                 <li
                                   key={index}
@@ -502,8 +260,8 @@ const ExpenseAnalytics = () => {
                           </h4>
                           <p>
                             {
-                              aiAnalysis.analysis.behavioralInsights
-                                .socialFactors
+                              aiAnalysis?.analysis?.behavioralInsights
+                                ?.socialFactors
                             }
                           </p>
                         </div>
@@ -520,8 +278,8 @@ const ExpenseAnalytics = () => {
                       </h3>
                       <p className="mb-6">
                         {
-                          aiAnalysis.analysis.educationalGuidance
-                            .financialLiteracy
+                          aiAnalysis?.analysis?.educationalGuidance
+                            ?.financialLiteracy
                         }
                       </p>
 
@@ -531,7 +289,7 @@ const ExpenseAnalytics = () => {
                             Практически умения
                           </h4>
                           <ul className="space-y-2">
-                            {aiAnalysis.analysis.educationalGuidance.practicalSkills.map(
+                            {aiAnalysis?.analysis?.educationalGuidance?.practicalSkills?.map(
                               (skill: string, index: number) => (
                                 <li
                                   key={index}
@@ -550,7 +308,7 @@ const ExpenseAnalytics = () => {
                             Препоръчани ресурси
                           </h4>
                           <ul className="space-y-2">
-                            {aiAnalysis.analysis.educationalGuidance.resources.map(
+                            {aiAnalysis?.analysis?.educationalGuidance?.resources?.map(
                               (resource: string, index: number) => (
                                 <li
                                   key={index}
@@ -580,7 +338,7 @@ const ExpenseAnalytics = () => {
                             Следващ месец
                           </h4>
                           <p>
-                            {aiAnalysis.analysis.futureProjections.nextMonth}
+                            {aiAnalysis?.analysis?.futureProjections?.nextMonth}
                           </p>
                         </div>
 
@@ -589,7 +347,10 @@ const ExpenseAnalytics = () => {
                             Тримесечна прогноза
                           </h4>
                           <p>
-                            {aiAnalysis.analysis.futureProjections.threeMonths}
+                            {
+                              aiAnalysis?.analysis?.futureProjections
+                                ?.threeMonths
+                            }
                           </p>
                         </div>
 
@@ -599,8 +360,8 @@ const ExpenseAnalytics = () => {
                           </h4>
                           <p>
                             {
-                              aiAnalysis.analysis.futureProjections
-                                .savingsPotential
+                              aiAnalysis?.analysis?.futureProjections
+                                ?.savingsPotential
                             }
                           </p>
                         </div>
