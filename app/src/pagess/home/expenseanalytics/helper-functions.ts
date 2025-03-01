@@ -1,4 +1,3 @@
-import { fetchExpenseAnalytics } from '../helper-functions';
 import { Transaction } from './expense-analytics-types';
 
 export const getCategorySummary = (data: Transaction[]) => {
