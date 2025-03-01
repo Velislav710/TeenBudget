@@ -126,11 +126,33 @@ const createAIanalysis = (
   main_findings,
   key_insights,
   risk_areas,
+  top_category,
+  category_breakdown,
+  spending_patterns,
+  emotional_triggers,
+  social_factors,
+  immediate_recommendations,
+  short_term_recommendations,
+  long_term_recommendations,
+  financial_literacy,
+  practical_skills,
+  resources,
+  next_month_future_projection,
+  three_month_future_projection,
+  savings_potential_future_projection,
   date,
   callback
 ) => {
-  const query =
-    "INSERT INTO expense_analysis (user_id, total_income, total_expense, total_balance, savings_rate, main_findings, key_insights, risk_areas, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  const query = `
+    INSERT INTO expense_analysis (
+      user_id, total_income, total_expense, total_balance, savings_rate, main_findings, 
+      key_insights, risk_areas, top_category, category_breakdown, spending_patterns, 
+      emotional_triggers, social_factors, immediate_recommendations, short_term_recommendations, 
+      long_term_recommendations, financial_literacy, practical_skills, resources, 
+      next_month_future_projection, three_month_future_projection, savings_potential_future_projection, date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
   db.query(
     query,
     [
@@ -142,6 +164,20 @@ const createAIanalysis = (
       main_findings,
       key_insights,
       risk_areas,
+      top_category,
+      category_breakdown,
+      spending_patterns,
+      emotional_triggers,
+      social_factors,
+      immediate_recommendations,
+      short_term_recommendations,
+      long_term_recommendations,
+      financial_literacy,
+      practical_skills,
+      resources,
+      next_month_future_projection,
+      three_month_future_projection,
+      savings_potential_future_projection,
       date
     ],
     callback

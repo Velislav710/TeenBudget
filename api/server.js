@@ -464,36 +464,8 @@ app.post("/save-dashboard-analysis", (req, res) => {
 });
 
 app.post("/save-expense-analysis", (req, res) => {
-  const {
-    total_income,
-    total_expense,
-    total_balance,
-    savings_rate,
-    main_findings,
-    key_insights,
-    risk_areas,
-    date
-  } = req.body;
-  const token = req.headers.authorization?.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ error: "Не е предоставен токен" });
-  }
-
-  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
-  const padding = base64Url.length % 4;
-  if (padding) {
-    base64Url += "=".repeat(4 - padding);
-  }
-
-  const decodedToken = atob(base64Url);
-
-  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
-    if (err) return res.status(401).json({ error: "Невалиден токен" });
-    const userId = decoded.id;
-
-    db.createAIanalysis(
-      userId,
+  try {
+    const {
       total_income,
       total_expense,
       total_balance,
@@ -501,14 +473,71 @@ app.post("/save-expense-analysis", (req, res) => {
       main_findings,
       key_insights,
       risk_areas,
-      date,
-      (err, result) => {
-        if (err)
-          return res.status(500).json({ error: "Грешка в базата данни" });
-        res.json({ message: "AI анализът е добавен успешно" });
+      top_category,
+      category_breakdown,
+      spending_patterns,
+      emotional_triggers,
+      social_factors,
+      immediate_recommendations,
+      short_term_recommendations,
+      long_term_recommendations,
+      financial_literacy,
+      practical_skills,
+      resources,
+      next_month_future_projection,
+      three_month_future_projection,
+      savings_potential_future_projection,
+      date
+    } = req.body;
+
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "Не е предоставен токен" });
+    }
+
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ error: "Невалиден токен" });
       }
-    );
-  });
+
+      const userId = decoded.id;
+
+      db.createAIanalysis(
+        userId,
+        total_income,
+        total_expense,
+        total_balance,
+        savings_rate,
+        main_findings,
+        key_insights,
+        risk_areas,
+        top_category,
+        category_breakdown,
+        spending_patterns,
+        emotional_triggers,
+        social_factors,
+        immediate_recommendations,
+        short_term_recommendations,
+        long_term_recommendations,
+        financial_literacy,
+        practical_skills,
+        resources,
+        next_month_future_projection,
+        three_month_future_projection,
+        savings_potential_future_projection,
+        date,
+        (err, result) => {
+          if (err) {
+            return res.status(500).json({ error: "Грешка в базата данни" });
+          }
+          res.json({ message: "AI анализът е добавен успешно" });
+        }
+      );
+    });
+  } catch (error) {
+    res.status(400).json({ error: "Невалидни данни" });
+  }
 });
 
 app.post("/save-financial-analysis", (req, res) => {
