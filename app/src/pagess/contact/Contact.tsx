@@ -1,22 +1,30 @@
+// Импортиране на необходимите зависимости от React и контекста на темата
 import React, { useState, ChangeEvent, FC } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import ThemeToggle from '../../components/ThemeToggle';
 import Footer from '../../components/Footerr/Footer';
 import SideMenu from '../../components/SideMenu';
 
+// Деклариране на функционалния компонент Contact
 const Contact: FC = () => {
+  // Извличане на текущия режим (тъмен или светъл) от контекста
   const { isDarkMode } = useTheme();
+
+  // Дефиниране на състоянието за съхраняване на въведените данни
   const [formData, setFormData] = useState({
     email: '',
     name: '',
   });
   const [message, setMessage] = useState('');
+
+  // Дефиниране на състоянието за маркиране на празни полета при изпращане
   const [emptyFields, setEmptyFields] = useState({
     email: false,
     name: false,
     message: false,
   });
 
+  // Функция за обработка на промени в полетата за въвеждане
   const handleInputChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -27,6 +35,7 @@ const Contact: FC = () => {
     }));
   };
 
+  // Функция за обработка на промени в текстовото поле за съобщение с лимит от 200 символа
   const handleMessageChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const inputValue = event.target.value;
     if (inputValue.length <= 200) {
@@ -34,8 +43,11 @@ const Contact: FC = () => {
     }
   };
 
+  // Функция за изпращане на формата
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+
+    // Проверка за празни полета
     const isEmpty = {
       email: !formData.email,
       name: !formData.name,
@@ -43,17 +55,21 @@ const Contact: FC = () => {
     };
     setEmptyFields(isEmpty);
 
+    // Ако всички полета са попълнени, формата се изпраща
     if (!Object.values(isEmpty).includes(true)) {
       console.log('Формата е изпратена с данни:', {
         email: formData.email,
         name: formData.name,
         message,
       });
+
+      // Изчистване на формата след успешно изпращане
       setFormData({ email: '', name: '' });
       setMessage('');
     }
   };
 
+  // Функция за динамично задаване на CSS класове в зависимост от грешки и тъмен/светъл режим
   const inputClasses = (hasError: boolean) => `
     w-full px-4 py-3 rounded-xl text-lg transition-all duration-300
     ${
@@ -75,9 +91,12 @@ const Contact: FC = () => {
           : 'bg-gradient-to-br from-rose-50 via-sky-50 to-teal-50'
       }`}
     >
+      {/* Странично меню */}
       <SideMenu />
+
       <div className="ml-64">
         <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Заглавна секция */}
           <header
             className={`fixed top-0 right-0 left-64 z-10 ${
               isDarkMode ? 'bg-slate-800/95' : 'bg-white/95'
@@ -97,6 +116,7 @@ const Contact: FC = () => {
             </div>
           </header>
 
+          {/* Основна част със заглавие и описание */}
           <main className="pt-24">
             <div
               className={`mb-8 p-6 rounded-xl ${
@@ -120,6 +140,7 @@ const Contact: FC = () => {
               </p>
             </div>
 
+            {/* Форма за контакт */}
             <form
               onSubmit={handleSubmit}
               className={`p-8 rounded-xl ${
@@ -127,6 +148,7 @@ const Contact: FC = () => {
               } backdrop-blur-sm shadow-xl`}
             >
               <div className="space-y-6">
+                {/* Поле за Email */}
                 <div>
                   <label
                     className={`text-base font-semibold block mb-2 ${
@@ -145,6 +167,7 @@ const Contact: FC = () => {
                   />
                 </div>
 
+                {/* Поле за име */}
                 <div>
                   <label
                     className={`text-base font-semibold block mb-2 ${
@@ -163,6 +186,7 @@ const Contact: FC = () => {
                   />
                 </div>
 
+                {/* Поле за съобщение */}
                 <div>
                   <label
                     className={`text-base font-semibold block mb-2 ${
@@ -192,6 +216,7 @@ const Contact: FC = () => {
                   </div>
                 </div>
 
+                {/* Бутон за изпращане */}
                 <button
                   type="submit"
                   className={`w-full ${
@@ -206,6 +231,8 @@ const Contact: FC = () => {
             </form>
           </main>
         </div>
+
+        {/* Футър */}
         <Footer />
       </div>
     </div>
