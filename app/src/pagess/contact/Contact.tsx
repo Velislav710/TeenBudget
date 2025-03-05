@@ -102,7 +102,7 @@ const Contact: FC = () => {
               isDarkMode ? 'bg-slate-800/95' : 'bg-white/95'
             } backdrop-blur-sm shadow-sm px-8 py-4`}
           >
-            <div className="max-w-7xl mx-auto flex justify-between items-center">
+            <div className="flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <h1
                   className={`text-2xl font-bold ${
@@ -113,6 +113,21 @@ const Contact: FC = () => {
                 </h1>
                 <ThemeToggle />
               </div>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('authToken');
+                  sessionStorage.removeItem('authToken');
+                  window.location.href = '/login';
+                }}
+                className={`px-6 py-2 rounded-md ${
+                  isDarkMode
+                    ? 'bg-rose-500/90 hover:bg-rose-600/90'
+                    : 'bg-rose-400/90 hover:bg-rose-500/90'
+                } text-white transition-all duration-200`}
+                title="Изход от профила"
+              >
+                Изход
+              </button>
             </div>
           </header>
 
