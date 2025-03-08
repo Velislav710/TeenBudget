@@ -210,7 +210,7 @@ app.post("/password-reset-request", (req, res) => {
 
     const encodedToken = Buffer.from(token).toString("base64");
 
-    const resetLink = `http://localhost:5173/resetpassword/resetbasic/${encodedToken}`;
+    const resetLink = `https://teenbudget.noit.eu/resetpassword/resetbasic/${encodedToken}`;
 
     const mailOptions = {
       from: EMAIL_USER,
@@ -632,5 +632,5 @@ app.get("/get-last-expense-analysis", (req, res) => {
 });
 
 app.listen(5000, () => {
-  console.log("Сървърът е стартиран на http://localhost:5000");
+  console.log("Сървърът е стартиран на port 5000");
 });
