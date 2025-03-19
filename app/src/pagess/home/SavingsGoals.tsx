@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import ThemeToggle from '../../components/ThemeToggle';
-import ApexCharts from 'react-apexcharts';
 import SideMenu from '../../components/SideMenu';
 import Footer from '../../components/Footerr/Footer';
 import { generateAIAnalysis } from './helper-functions';
+import { FaSpinner } from 'react-icons/fa';
 
 interface Milestone {
   date: string;
@@ -49,6 +50,7 @@ const incomeRanges = [
 ];
 
 const SavingsGoals = () => {
+  const navigate = useNavigate();
   const { isDarkMode } = useTheme();
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [newGoal, setNewGoal] = useState({
@@ -59,6 +61,7 @@ const SavingsGoals = () => {
     monthlyIncome: incomeRanges[0],
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState<number | null>(null); // ID цели, за която се зарежда AI анализ
   const [error, setError] = useState<string | null>(null);
 
   // Зареждане на целите от localStorage при първоначално зареждане
@@ -128,24 +131,21 @@ const SavingsGoals = () => {
         }
       }
 
-      // Извикване на AI анализа
-      const analysis = await generateAIAnalysis({
-        name: newGoal.name,
-        targetAmount,
-        deadline: newGoal.deadline,
-        monthlyIncome,
-      });
+      // Създаваме нова цел с уникално ID
+      const newGoalId = Date.now();
 
+      // Добавяме целта без AI анализ първоначално
       const goalToAdd = {
-        id: Date.now(),
+        id: newGoalId,
         ...newGoal,
         targetAmount,
         currentAmount: 0,
         milestones,
-        aiAnalysis: analysis,
       };
 
       setGoals((prevGoals) => [...prevGoals, goalToAdd]);
+
+      // Нулираме формата
       setNewGoal({
         name: '',
         targetAmount: '',
@@ -153,6 +153,23 @@ const SavingsGoals = () => {
         description: '',
         monthlyIncome: incomeRanges[0],
       });
+
+      // Сега заявяваме AI анализа
+      setAiLoading(newGoalId);
+
+      const analysis = await generateAIAnalysis({
+        name: goalToAdd.name,
+        targetAmount,
+        deadline: goalToAdd.deadline,
+        monthlyIncome,
+      });
+
+      // Обновяваме целта с AI анализа
+      setGoals((prevGoals) =>
+        prevGoals.map((goal) =>
+          goal.id === newGoalId ? { ...goal, aiAnalysis: analysis } : goal,
+        ),
+      );
     } catch (err) {
       setError(
         'Възникна грешка при създаването на целта. Моля, опитайте отново.',
@@ -160,6 +177,7 @@ const SavingsGoals = () => {
       console.error(err);
     } finally {
       setIsLoading(false);
+      setAiLoading(null);
     }
   };
 
@@ -176,53 +194,120 @@ const SavingsGoals = () => {
   };
 
   const updateMilestoneProgress = (goalId: number, milestoneIndex: number) => {
-    setGoals((prevGoals) =>
-      prevGoals.map((goal) => {
+    setGoals((prevGoals) => {
+      const updatedGoals = prevGoals.map((goal) => {
         if (goal.id === goalId) {
+          // Създаваме копие на междинните цели
           const updatedMilestones = [...goal.milestones];
+
+          // Обръщаме състоянието на избраната междинна цел
           updatedMilestones[milestoneIndex].isCompleted =
             !updatedMilestones[milestoneIndex].isCompleted;
 
-          // Ако отбелязваме като завършена, увеличаваме текущата сума
+          // Изчисляваме новата текуща сума
+          let newCurrentAmount = 0;
+
+          // Ако отбелязваме като завършена, използваме сумата на тази цел
           if (updatedMilestones[milestoneIndex].isCompleted) {
-            return {
-              ...goal,
-              milestones: updatedMilestones,
-              currentAmount: updatedMilestones[milestoneIndex].targetAmount,
-            };
+            newCurrentAmount = updatedMilestones[milestoneIndex].targetAmount;
+          } else {
+            // Ако размаркираме, намираме последната завършена цел
+            for (let i = 0; i < updatedMilestones.length; i++) {
+              if (updatedMilestones[i].isCompleted && i !== milestoneIndex) {
+                newCurrentAmount = Math.max(
+                  newCurrentAmount,
+                  updatedMilestones[i].targetAmount,
+                );
+              }
+            }
           }
 
-          // Ако размаркираме, намираме предишната завършена цел
-          const previousCompleted = updatedMilestones
-            .slice(0, milestoneIndex)
-            .filter((m) => m.isCompleted)
-            .pop();
-
+          // Връщаме обновената цел
           return {
             ...goal,
             milestones: updatedMilestones,
-            currentAmount: previousCompleted
-              ? previousCompleted.targetAmount
-              : 0,
+            currentAmount: newCurrentAmount,
           };
         }
         return goal;
-      }),
-    );
+      });
+
+      // Запазваме обновените цели в localStorage
+      localStorage.setItem('savingsGoals', JSON.stringify(updatedGoals));
+
+      return updatedGoals;
+    });
   };
 
   const deleteGoal = (goalId: number) => {
-    setGoals((prevGoals) => prevGoals.filter((goal) => goal.id !== goalId));
+    setGoals((prevGoals) => {
+      const updatedGoals = prevGoals.filter((goal) => goal.id !== goalId);
+      localStorage.setItem('savingsGoals', JSON.stringify(updatedGoals));
+      return updatedGoals;
+    });
   };
 
   const updateGoalAmount = (goalId: number, amount: number) => {
-    setGoals((prevGoals) =>
-      prevGoals.map((goal) =>
+    setGoals((prevGoals) => {
+      const updatedGoals = prevGoals.map((goal) =>
         goal.id === goalId
           ? { ...goal, currentAmount: Math.min(amount, goal.targetAmount) }
           : goal,
-      ),
-    );
+      );
+      localStorage.setItem('savingsGoals', JSON.stringify(updatedGoals));
+      return updatedGoals;
+    });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    sessionStorage.removeItem('authToken');
+    navigate('/login');
+  };
+
+  const regenerateAIAnalysis = async (goalId: number) => {
+    const goal = goals.find((g) => g.id === goalId);
+    if (!goal) return;
+
+    setAiLoading(goalId);
+
+    try {
+      // Извличане на числовата стойност от месечния доход
+      const incomeRange = goal.monthlyIncome;
+      let monthlyIncome = 0;
+
+      if (incomeRange === 'над 2000 лв.') {
+        monthlyIncome = 2500;
+      } else {
+        const range = incomeRange.split('-');
+        if (range.length === 2) {
+          const min = parseInt(range[0]);
+          const max = parseInt(range[1].replace(' лв.', ''));
+          monthlyIncome = (min + max) / 2;
+        }
+      }
+
+      // Изтриваме кеша за тази цел
+      localStorage.removeItem(`goal_${goal.name}_${goal.targetAmount}`);
+
+      const analysis = await generateAIAnalysis({
+        name: goal.name,
+        targetAmount: goal.targetAmount,
+        deadline: goal.deadline,
+        monthlyIncome,
+      });
+
+      // Обновяваме целта с новия AI анализ
+      setGoals((prevGoals) =>
+        prevGoals.map((g) =>
+          g.id === goalId ? { ...g, aiAnalysis: analysis } : g,
+        ),
+      );
+    } catch (err) {
+      console.error('Грешка при генериране на AI анализ:', err);
+    } finally {
+      setAiLoading(null);
+    }
   };
 
   return (
@@ -241,15 +326,28 @@ const SavingsGoals = () => {
               isDarkMode ? 'bg-slate-800/95' : 'bg-white/95'
             } backdrop-blur-sm shadow-sm px-8 py-4`}
           >
-            <div className="flex items-center gap-4">
-              <h1
-                className={`text-2xl font-bold ${
-                  isDarkMode ? 'text-white' : 'text-slate-800'
-                }`}
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <h1
+                  className={`text-2xl font-bold ${
+                    isDarkMode ? 'text-white' : 'text-slate-800'
+                  }`}
+                >
+                  Цели за спестяване
+                </h1>
+                <ThemeToggle />
+              </div>
+              <button
+                onClick={handleLogout}
+                className={`px-6 py-2 rounded-md ${
+                  isDarkMode
+                    ? 'bg-rose-500/90 hover:bg-rose-600/90'
+                    : 'bg-rose-400/90 hover:bg-rose-500/90'
+                } text-white transition-all duration-200`}
+                title="Изход от профила"
               >
-                Цели за спестяване
-              </h1>
-              <ThemeToggle />
+                Изход
+              </button>
             </div>
           </header>
 
@@ -365,7 +463,13 @@ const SavingsGoals = () => {
                   isLoading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
-                {isLoading ? 'Създаване...' : 'Добави цел'}
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <FaSpinner className="animate-spin mr-2" /> Създаване...
+                  </span>
+                ) : (
+                  'Добави цел'
+                )}
               </button>
             </div>
 
@@ -459,15 +563,53 @@ const SavingsGoals = () => {
                       </button>
                     </div>
 
-                    {goal.aiAnalysis && (
+                    {aiLoading === goal.id ? (
+                      <div
+                        className={`mt-4 p-8 rounded-lg ${
+                          isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
+                        } flex flex-col items-center justify-center`}
+                      >
+                        <FaSpinner
+                          className={`text-4xl animate-spin mb-4 ${
+                            isDarkMode ? 'text-sky-400' : 'text-sky-500'
+                          }`}
+                        />
+                        <p
+                          className={`text-lg ${
+                            isDarkMode ? 'text-slate-300' : 'text-slate-600'
+                          }`}
+                        >
+                          Генериране на AI план за спестяване...
+                        </p>
+                        <p
+                          className={`text-sm mt-2 ${
+                            isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                          }`}
+                        >
+                          Моля, изчакайте. Това може да отнеме няколко секунди.
+                        </p>
+                      </div>
+                    ) : goal.aiAnalysis ? (
                       <div
                         className={`mt-4 p-4 rounded-lg ${
                           isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
                         }`}
                       >
-                        <h4 className="font-semibold mb-4">
-                          AI План за спестяване
-                        </h4>
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-semibold">
+                            AI План за спестяване
+                          </h4>
+                          <button
+                            onClick={() => regenerateAIAnalysis(goal.id)}
+                            className={`px-3 py-1 text-sm rounded-md ${
+                              isDarkMode
+                                ? 'bg-violet-500/90 hover:bg-violet-600/90'
+                                : 'bg-violet-400/90 hover:bg-violet-500/90'
+                            } text-white transition-all duration-200`}
+                          >
+                            Обнови плана
+                          </button>
+                        </div>
 
                         <div className="space-y-4">
                           <div>
@@ -513,7 +655,7 @@ const SavingsGoals = () => {
                                     onChange={() =>
                                       updateMilestoneProgress(goal.id, index)
                                     }
-                                    className="rounded text-sky-400"
+                                    className="rounded text-sky-400 cursor-pointer"
                                   />
                                   <span>
                                     {milestone.description}:{' '}
@@ -552,6 +694,30 @@ const SavingsGoals = () => {
                             </p>
                           </div>
                         </div>
+                      </div>
+                    ) : (
+                      <div
+                        className={`mt-4 p-4 rounded-lg ${
+                          isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
+                        } text-center`}
+                      >
+                        <p
+                          className={`mb-3 ${
+                            isDarkMode ? 'text-slate-300' : 'text-slate-600'
+                          }`}
+                        >
+                          AI план за спестяване не е наличен
+                        </p>
+                        <button
+                          onClick={() => regenerateAIAnalysis(goal.id)}
+                          className={`px-4 py-2 rounded-md ${
+                            isDarkMode
+                              ? 'bg-violet-500/90 hover:bg-violet-600/90'
+                              : 'bg-violet-400/90 hover:bg-violet-500/90'
+                          } text-white transition-all duration-200`}
+                        >
+                          Генерирай AI план
+                        </button>
                       </div>
                     )}
                   </div>
