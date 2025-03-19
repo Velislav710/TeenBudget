@@ -36,8 +36,6 @@ export const fetchDashboardAnalysis = async (
             ${JSON.stringify(transactionData, null, 2)}`,
           },
         ],
-        temperature: 0.7,
-        max_tokens: 1000,
       }),
     });
 
@@ -374,8 +372,6 @@ export const generateAIAnalysis = async (goalData: {
               }`,
           },
         ],
-        temperature: 0.7,
-        max_tokens: 1500,
       }),
     });
 
