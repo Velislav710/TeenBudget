@@ -327,8 +327,18 @@ export const generateAIAnalysis = async (goalData: {
         messages: [
           {
             role: 'system',
-            content:
-              'Ти си финансов съветник за тийнейджъри. Създай персонализиран план за спестяване, който да е реалистичен и постижим.',
+            content: `Ти си финансов съветник за тийнейджъри. Създай персонализиран план за спестяване, който да е реалистичен и постижим. 
+            
+            Важно е да предоставиш конкретни стъпки, които да помогнат на тийнейджъра да постигне целта си, като вземеш предвид неговия месечен доход и срока за постигане на целта.
+            
+            Включи:
+            1. Точна месечна сума, която трябва да се спестява
+            2. Подробни стъпки как да се постигне целта
+            3. Алтернативни начини за увеличаване на доходите
+            4. Практически съвети за намаляване на разходите
+            5. Как да се проследява прогреса
+            
+            Отговорът трябва да е мотивиращ, реалистичен и съобразен с възрастта на потребителя.`,
           },
           {
             role: 'user',
@@ -341,17 +351,31 @@ export const generateAIAnalysis = async (goalData: {
               Върни отговора в следния JSON формат:
               {
                 "mainPlan": {
-                  "monthlyTarget": число,
-                  "timeline": "срок в месеци",
-                  "steps": ["3 конкретни стъпки за постигане на целта"]
+                  "monthlyTarget": число (колко трябва да спестява месечно),
+                  "timeline": "подробно описание на времевата рамка",
+                  "steps": [
+                    "Стъпка 1 с конкретни действия",
+                    "Стъпка 2 с конкретни действия",
+                    "Стъпка 3 с конкретни действия",
+                    "Стъпка 4 с конкретни действия",
+                    "Стъпка 5 с конкретни действия"
+                  ]
                 },
                 "alternativeMethods": {
-                  "suggestions": ["3 начина за допълнителни доходи"],
-                  "expectedResults": "описание на очаквания резултат"
+                  "suggestions": [
+                    "Конкретен начин за допълнителен доход подходящ за тийнейджъри",
+                    "Втори начин за допълнителен доход с примери",
+                    "Трети начин за допълн
+                    "Трети начин за допълнителен доход с примери",
+                    "Четвърти начин за допълнителен доход с примери"
+                  ],
+                  "expectedResults": "Подробно описание на очакваните резултати от прилагането на тези методи"
                 }
               }`,
           },
         ],
+        temperature: 0.7,
+        max_tokens: 1500,
       }),
     });
 
@@ -361,15 +385,99 @@ export const generateAIAnalysis = async (goalData: {
 
     const data = await response.json();
     const content = data.choices[0]?.message?.content;
-    const analysis = content ? JSON.parse(content) : null;
 
-    if (analysis) {
-      localStorage.setItem(cacheKey, JSON.stringify(analysis));
+    try {
+      const analysis = content ? JSON.parse(content) : null;
+
+      if (analysis) {
+        localStorage.setItem(cacheKey, JSON.stringify(analysis));
+      }
+
+      return analysis;
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+
+      // Опит за извличане на JSON от текста, ако отговорът не е чист JSON
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const extractedJson = JSON.parse(jsonMatch[0]);
+          localStorage.setItem(cacheKey, JSON.stringify(extractedJson));
+          return extractedJson;
+        } catch (e) {
+          console.error('Failed to extract JSON from response');
+        }
+      }
+
+      // Резервен вариант, ако не можем да извлечем JSON
+      return {
+        mainPlan: {
+          monthlyTarget: Math.ceil(
+            goalData.targetAmount /
+              getMonthsBetweenDates(new Date(), new Date(goalData.deadline)),
+          ),
+          timeline: `План за постигане на целта до ${new Date(
+            goalData.deadline,
+          ).toLocaleDateString('bg-BG')}`,
+          steps: [
+            'Определи точна месечна сума за спестяване',
+            'Създай отделна сметка за тази цел',
+            'Намали ненужните разходи',
+            'Търси начини за допълнителни доходи',
+            'Проследявай редовно прогреса си',
+          ],
+        },
+        alternativeMethods: {
+          suggestions: [
+            'Предлагай услуги като помощ с домашни, грижа за домашни любимци или градинарство',
+            'Продавай ненужни вещи онлайн',
+            'Участвай в проучвания или тестване на продукти',
+            'Помагай на съседи или роднини срещу заплащане',
+          ],
+          expectedResults:
+            'С тези методи можеш да увеличиш месечния си доход с 10-30% и да постигнеш целта си по-бързо.',
+        },
+      };
     }
-
-    return analysis;
   } catch (error) {
     console.error('AI Analysis Error:', error);
-    return null;
+
+    // Резервен вариант при грешка в API заявката
+    return {
+      mainPlan: {
+        monthlyTarget: Math.ceil(
+          goalData.targetAmount /
+            getMonthsBetweenDates(new Date(), new Date(goalData.deadline)),
+        ),
+        timeline: `План за постигане на целта до ${new Date(
+          goalData.deadline,
+        ).toLocaleDateString('bg-BG')}`,
+        steps: [
+          'Определи точна месечна сума за спестяване',
+          'Създай отделна сметка за тази цел',
+          'Намали ненужните разходи',
+          'Търси начини за допълнителни доходи',
+          'Проследявай редовно прогреса си',
+        ],
+      },
+      alternativeMethods: {
+        suggestions: [
+          'Предлагай услуги като помощ с домашни, грижа за домашни любимци или градинарство',
+          'Продавай ненужни вещи онлайн',
+          'Участвай в проучвания или тестване на продукти',
+          'Помагай на съседи или роднини срещу заплащане',
+        ],
+        expectedResults:
+          'С тези методи можеш да увеличиш месечния си доход с 10-30% и да постигнеш целта си по-бързо.',
+      },
+    };
   }
 };
+
+// Помощна функция за изчисляване на месеците между две дати
+function getMonthsBetweenDates(startDate: Date, endDate: Date): number {
+  const months =
+    (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+    (endDate.getMonth() - startDate.getMonth());
+  return months > 0 ? months : 1; // Минимум 1 месец
+}
