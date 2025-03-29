@@ -13,7 +13,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 require("dotenv").config();
 
-const whitelist = ["http://localhost:5173", "https://teenbudget.noit.eu"];
+const whitelist = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://teenbudget.noit.eu"
+];
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || whitelist.includes(origin)) {
@@ -349,20 +353,21 @@ app.post("/transactions", (req, res) => {
       description,
       date,
       (err, result) => {
-        if (err)
+        if (err) {
+          console.error("Database error:", err);
           return res.status(500).json({ error: "Грешка в базата данни" });
+        }
 
-        res.json({
-          message: "Транзакцията е добавена успешно",
-          transaction: {
-            id: result.insertId,
-            user_id: userId,
-            type,
-            amount,
-            category,
-            description,
-            date
+        db.getTransactionById(result.insertId, (err, transaction) => {
+          if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Грешка в базата данни" });
           }
+
+          res.json({
+            message: "Транзакцията е добавена успешно",
+            transaction: transaction[0]
+          });
         });
       }
     );
@@ -386,166 +391,20 @@ app.get("/transactions", (req, res) => {
 
   jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
     if (err) return res.status(401).json({ error: "Невалиден токен" });
-
     const userId = decoded.id;
 
-    db.getTransactionsByUserId(userId, (err, results) => {
-      if (err) return res.status(500).json({ error: "Грешка в базата данни" });
-
-      res.json({ transactions: results });
-    });
-  });
-});
-
-app.delete("/transactions", (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ error: "Не е предоставен токен" });
-  }
-
-  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
-  const padding = base64Url.length % 4;
-  if (padding) {
-    base64Url += "=".repeat(4 - padding);
-  }
-
-  const decodedToken = atob(base64Url);
-
-  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
-    if (err) return res.status(401).json({ error: "Невалиден токен" });
-
-    const userId = decoded.id;
-
-    db.deleteTransactionsByUserId(userId, (err) => {
-      if (err) return res.status(500).json({ error: "Грешка в базата данни" });
-
-      res.json({ message: "Всички транзакции са изтрити успешно" });
-    });
-  });
-});
-
-app.post("/save-dashboard-analysis", (req, res) => {
-  const {
-    summary,
-    recommendations,
-    savingsPotential,
-    monthlyTrend,
-    topCategory
-  } = req.body;
-  const token = req.headers.authorization?.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ error: "Не е предоставен токен" });
-  }
-
-  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
-  const padding = base64Url.length % 4;
-  if (padding) {
-    base64Url += "=".repeat(4 - padding);
-  }
-
-  const decodedToken = atob(base64Url);
-
-  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
-    if (err) return res.status(401).json({ error: "Невалиден токен" });
-    const userId = decoded.id;
-
-    db.insertDashboardAnalysis(
-      userId,
-      { summary, recommendations, savingsPotential, monthlyTrend, topCategory },
-      (err, result) => {
-        if (err)
-          return res.status(500).json({ error: "Грешка в базата данни" });
-        res.json({ message: "Финансовият анализ е добавен успешно" });
+    db.getTransactionsByUserId(userId, (err, transactions) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Грешка в базата данни" });
       }
-    );
+
+      res.json({ transactions });
+    });
   });
 });
 
-app.post("/save-expense-analysis", (req, res) => {
-  try {
-    const {
-      total_income,
-      total_expense,
-      total_balance,
-      savings_rate,
-      main_findings,
-      key_insights,
-      risk_areas,
-      top_category,
-      category_breakdown,
-      spending_patterns,
-      emotional_triggers,
-      social_factors,
-      immediate_recommendations,
-      short_term_recommendations,
-      long_term_recommendations,
-      financial_literacy,
-      practical_skills,
-      resources,
-      next_month_future_projection,
-      three_month_future_projection,
-      savings_potential_future_projection,
-      date
-    } = req.body;
-
-    const token = req.headers.authorization?.split(" ")[1];
-
-    if (!token) {
-      return res.status(401).json({ error: "Не е предоставен токен" });
-    }
-
-    let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
-    const padding = base64Url.length % 4;
-    if (padding) {
-      base64Url += "=".repeat(4 - padding);
-    }
-
-    const decodedToken = atob(base64Url);
-
-    jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
-      if (err) return res.status(401).json({ error: "Невалиден токен" });
-
-      const userId = decoded.id;
-
-      db.createAIanalysis(
-        userId,
-        total_income,
-        total_expense,
-        total_balance,
-        savings_rate,
-        main_findings,
-        key_insights,
-        risk_areas,
-        top_category,
-        category_breakdown,
-        spending_patterns,
-        emotional_triggers,
-        social_factors,
-        immediate_recommendations,
-        short_term_recommendations,
-        long_term_recommendations,
-        financial_literacy,
-        practical_skills,
-        resources,
-        next_month_future_projection,
-        three_month_future_projection,
-        savings_potential_future_projection,
-        date,
-        (err, result) => {
-          if (err) {
-            return res.status(500).json({ error: "Грешка в базата данни" });
-          }
-          res.json({ message: "AI анализът е добавен успешно" });
-        }
-      );
-    });
-  } catch (error) {
-    res.status(400).json({ error: "Невалидни данни" });
-  }
-});
-
+// Ендпойнт за запазване на финансов анализ
 app.post("/save-financial-analysis", (req, res) => {
   const {
     food,
@@ -575,7 +434,7 @@ app.post("/save-financial-analysis", (req, res) => {
     if (err) return res.status(401).json({ error: "Невалиден токен" });
     const userId = decoded.id;
 
-    db.insertFinancialAnalysis(
+    db.saveFinancialAnalysis(
       userId,
       food,
       transport,
@@ -584,16 +443,207 @@ app.post("/save-financial-analysis", (req, res) => {
       education,
       clothes,
       others,
-      recommendations,
+      JSON.stringify(recommendations),
       (err, result) => {
-        if (err)
+        if (err) {
+          console.error("Database error:", err);
           return res.status(500).json({ error: "Грешка в базата данни" });
-        res.json({ message: "Финансовият анализ е добавен успешно" });
+        }
+
+        res.json({
+          message: "Финансовият анализ е запазен успешно",
+          analysisId: result.insertId
+        });
       }
     );
   });
 });
 
+// Ендпойнт за запазване на анализ на таблото
+app.post("/save-dashboard-analysis", (req, res) => {
+  const {
+    summary,
+    recommendations,
+    savingsPotential,
+    monthlyTrend,
+    topCategory
+  } = req.body;
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding);
+  }
+
+  const decodedToken = atob(base64Url);
+
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(401).json({ error: "Невалиден токен" });
+    const userId = decoded.id;
+
+    db.saveDashboardAnalysis(
+      userId,
+      summary,
+      JSON.stringify(recommendations),
+      savingsPotential,
+      monthlyTrend,
+      topCategory,
+      (err, result) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Грешка в базата данни" });
+        }
+
+        res.json({
+          message: "Анализът на таблото е запазен успешно",
+          analysisId: result.insertId
+        });
+      }
+    );
+  });
+});
+
+// Ендпойнт за създаване на цел за спестяване
+app.post("/savings-goals", (req, res) => {
+  const {
+    name,
+    targetAmount,
+    currentAmount,
+    deadline,
+    description,
+    monthlyIncome,
+    milestones,
+    aiAnalysis
+  } = req.body;
+  const token = req.headers.authorization?.split(" ")[1];
+
+  console.log("Received request to create savings goal:", {
+    name,
+    targetAmount,
+    deadline
+  });
+
+  if (!token) {
+    console.log("No token provided");
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding);
+  }
+
+  const decodedToken = atob(base64Url);
+
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+    if (err) {
+      console.log("Token verification failed:", err);
+      return res.status(401).json({ error: "Невалиден токен" });
+    }
+    const userId = decoded.id;
+    console.log("Token verified, user ID:", userId);
+
+    // Преобразуване на обектите в JSON стрингове за съхранение в базата данни
+    const milestonesJson = JSON.stringify(milestones);
+    const aiAnalysisJson = JSON.stringify(aiAnalysis);
+    const created_at = new Date();
+    const updated_at = new Date();
+
+    console.log("Attempting to save to database with data:", {
+      userId,
+      name,
+      targetAmount,
+      currentAmount,
+      deadline
+    });
+
+    db.createSavingsGoal(
+      userId,
+      name,
+      targetAmount,
+      currentAmount || 0,
+      deadline,
+      description,
+      monthlyIncome,
+      milestonesJson,
+      aiAnalysisJson,
+      created_at,
+      updated_at,
+      (err, result) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Грешка в базата данни" });
+        }
+
+        console.log("Successfully saved savings goal:", result);
+        res.json({
+          message: "Целта за спестяване е добавена успешно",
+          goal: {
+            id: result.insertId,
+            name,
+            targetAmount,
+            currentAmount: currentAmount || 0,
+            deadline,
+            description,
+            monthlyIncome,
+            milestones,
+            aiAnalysis
+          }
+        });
+      }
+    );
+  });
+});
+
+// Ендпойнт за зареждане на цели за спестяване
+app.get("/savings-goals", (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding);
+  }
+
+  const decodedToken = atob(base64Url);
+
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(401).json({ error: "Невалиден токен" });
+    const userId = decoded.id;
+
+    db.query(
+      "SELECT * FROM savings_goals WHERE user_id = ? ORDER BY created_at DESC",
+      [userId],
+      (err, results) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Грешка в базата данни" });
+        }
+
+        // Преобразуване на JSON стрингове обратно в обекти
+        const goals = results.map((goal) => ({
+          ...goal,
+          milestones: JSON.parse(goal.milestones),
+          aiAnalysis: JSON.parse(goal.ai_analysis)
+        }));
+
+        res.json({ goals });
+      }
+    );
+  });
+});
+
+// Ендпойнт за получаване на последния анализ на разходите
 app.get("/get-last-expense-analysis", (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
 
@@ -609,28 +659,32 @@ app.get("/get-last-expense-analysis", (req, res) => {
 
   const decodedToken = atob(base64Url);
 
-  try {
-    jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
-      const userId = decoded.id;
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(401).json({ error: "Невалиден токен" });
+    const userId = decoded.id;
 
-      db.getLastAIanalysis(userId, (err, result) => {
-        if (err) {
-          console.error("Database error:", err);
-          return res.status(500).json({ error: "Грешка в базата данни" });
-        }
+    db.getLastExpenseAnalysis(userId, (err, analysis) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Грешка в базата данни" });
+      }
 
-        if (!result || result.length === 0) {
-          return res.status(404).json({ error: "Няма записан анализ" });
-        }
-        res.json(result);
-      });
+      if (!analysis || analysis.length === 0) {
+        return res.json({ message: "Няма намерен анализ" });
+      }
+
+      // Преобразуване на JSON стрингове обратно в обекти
+      const result = {
+        ...analysis[0],
+        recommendations: JSON.parse(analysis[0].recommendations)
+      };
+
+      res.json(result);
     });
-  } catch (error) {
-    console.error("JWT error:", error);
-    return res.status(401).json({ error: "Невалиден токен" });
-  }
+  });
 });
 
-app.listen(5000, () => {
-  console.log("Сървърът е стартиран на port 5000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });

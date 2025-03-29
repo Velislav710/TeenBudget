@@ -1,8 +1,10 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import ThemeToggle from '../../components/ThemeToggle';
+import Footer from '../../components/Footerr/Footer';
 
-const VerifyPage = ({}: {}) => {
+const VerifyPage = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
   const inputRefs: any = {
@@ -138,129 +140,165 @@ const VerifyPage = ({}: {}) => {
   };
 
   return (
-    <div>
-      <div className="container h-screen flex flex-col items-center justify-center">
-        <div className="box w-[31rem] max-w-[36rem] p-12 bg-white shadow-lg rounded-lg">
-          <div className="box-body p-12">
-            <p className="font-semibold mb-2 text-center text-xl">
-              Потвърдете, че сте вие.
+    <div
+      className={`min-h-screen ${
+        isDarkMode
+          ? 'bg-gradient-to-br from-slate-900 via-gray-800 to-slate-900'
+          : 'bg-gradient-to-br from-rose-50 via-sky-50 to-teal-50'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <header
+          className={`fixed top-0 right-0 left-0 z-10 ${
+            isDarkMode ? 'bg-slate-800/95' : 'bg-white/95'
+          } backdrop-blur-sm shadow-sm px-8 py-4`}
+        >
+          <div className="max-w-7xl mx-auto flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <h1
+                className={`text-2xl font-bold ${
+                  isDarkMode ? 'text-white' : 'text-slate-800'
+                }`}
+              >
+                <Link to="/">Тийн Бюджет</Link>
+              </h1>
+              <ThemeToggle />
+            </div>
+            <div className="flex items-center gap-4">
+              <Link
+                to="/login"
+                className={`px-6 py-2 rounded-md ${
+                  isDarkMode
+                    ? 'bg-sky-500/90 hover:bg-sky-600/90'
+                    : 'bg-sky-400/90 hover:bg-sky-500/90'
+                } text-white transition-all duration-200`}
+              >
+                Вход
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        <main className="pt-24 flex justify-center items-center min-h-[calc(100vh-180px)]">
+          <div
+            className={`w-full max-w-md p-8 rounded-2xl ${
+              isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
+            } backdrop-blur-sm shadow-lg`}
+          >
+            <h2
+              className={`text-3xl font-bold mb-6 text-center ${
+                isDarkMode ? 'text-white' : 'text-slate-800'
+              }`}
+            >
+              Потвърждение
+            </h2>
+            <p
+              className={`text-center mb-8 ${
+                isDarkMode ? 'text-slate-300' : 'text-slate-600'
+              }`}
+            >
+              Попълнете 6-цифрения код, изпратен на вашата поща {email}
             </p>
-            <p className="mb-4 text-[#8c9097] dark:text-white/50 opacity-[0.7] font-normal text-center">
-              Попълнете 4 цифреният код, изпратен на вашата поща.
-            </p>
+
             {alerts.map((alert, idx) => (
               <div
-                className={`alert alert-${alert.color} flex items-center`}
+                className={`mb-6 p-3 ${
+                  alert.color === 'success'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
+                } rounded-md text-center`}
                 role="alert"
                 key={idx}
               >
                 {alert.icon}
-                <div>{alert.message}</div>
+                <span className="ml-2">{alert.message}</span>
               </div>
             ))}
-            <div className="grid grid-cols-12 gap-y-4">
-              <div className="xl:col-span-12 col-span-12 mb-2">
-                <div className="flex justify-center gap-2 mb-4">
-                  <div className="col-span-3 px-1">
-                    <input
-                      type="text"
-                      className="border-2 !px-0 !w-16 !h-16 form-control w-full !rounded-md form-control-lg text-center !text-[1rem]"
-                      required
-                      id="one"
-                      maxLength={1}
-                      onChange={() => handleInputChange('one', 'two')}
-                      ref={inputRefs.one}
-                    />
-                  </div>
-                  <div className="col-span-3 px-1">
-                    <input
-                      type="text"
-                      className="border-2 !px-0 !w-16 !h-16 form-control w-full !rounded-md form-control-lg text-center !text-[1rem]"
-                      required
-                      id="two"
-                      maxLength={1}
-                      onChange={() => handleInputChange('two', 'three')}
-                      ref={inputRefs.two}
-                    />
-                  </div>
-                  <div className="col-span-3 px-1">
-                    <input
-                      type="text"
-                      className="border-2 !px-0 !w-16 !h-16 form-control w-full !rounded-md form-control-lg text-center !text-[1rem]"
-                      required
-                      id="three"
-                      maxLength={1}
-                      onChange={() => handleInputChange('three', 'four')}
-                      ref={inputRefs.three}
-                    />
-                  </div>
-                  <div className="col-span-3 px-1">
-                    <input
-                      type="text"
-                      className="border-2 !px-0 !w-16 !h-16 form-control w-full !rounded-md form-control-lg text-center !text-[1rem]"
-                      required
-                      id="four"
-                      maxLength={1}
-                      onChange={() => handleInputChange('four', 'five')}
-                      ref={inputRefs.four}
-                    />
-                  </div>
-                  <div className="col-span-3 px-1">
-                    <input
-                      type="text"
-                      className="border-2 !px-0 !w-16 !h-16 form-control w-full !rounded-md form-control-lg text-center !text-[1rem]"
-                      required
-                      id="five"
-                      maxLength={1}
-                      onChange={() => handleInputChange('five', 'six')}
-                      ref={inputRefs.five}
-                    />
-                  </div>
-                  <div className="col-span-3 px-1">
-                    <input
-                      type="text"
-                      className="border-2 !px-0 !w-16 !h-16 form-control w-full !rounded-md form-control-lg text-center !text-[1rem]"
-                      required
-                      id="six"
-                      maxLength={1}
-                      onChange={() => handleInputChange('six', 'nextInputId')}
-                      ref={inputRefs.six}
-                    />
-                  </div>
-                </div>
-                <div className="form-check mt-2 mb-0 !ps-0">
-                  <label className="form-check-label" htmlFor="defaultCheck1">
-                    Не получихте код?
-                    <button
-                      onClick={handleResendCode}
-                      className="text-primary ms-2 inline-block"
-                      disabled={isResending}
-                    >
-                      {isResending ? 'Изпращане...' : 'Прати отново'}
-                    </button>
-                  </label>
-                </div>
-              </div>
-              <div className="xl:col-span-12 col-span-12 grid mt-2">
-                <button
-                  onClick={handleVerification}
-                  className="ti-btn ti-btn-lg bg-primary text-white !font-medium dark:border-defaultborder/10"
+
+            <div className="space-y-6">
+              <div>
+                <label
+                  className={`block mb-2 font-medium text-center ${
+                    isDarkMode ? 'text-slate-200' : 'text-slate-700'
+                  }`}
                 >
-                  Потвърдете
-                </button>
+                  Код за потвърждение
+                </label>
+                <div className="flex justify-center gap-2 mb-4">
+                  {['one', 'two', 'three', 'four', 'five', 'six'].map(
+                    (id, index) => (
+                      <input
+                        key={id}
+                        type="text"
+                        className={`w-12 h-12 text-center text-xl font-bold rounded-lg transition-all duration-300 ${
+                          isDarkMode
+                            ? 'bg-slate-700/50 border-slate-600 text-white focus:border-sky-500 focus:ring-sky-500'
+                            : 'bg-white/70 border-slate-300 text-slate-900 focus:border-sky-500 focus:ring-sky-500'
+                        } border-2 focus:ring-2 focus:outline-none`}
+                        required
+                        maxLength={1}
+                        onChange={() =>
+                          handleInputChange(
+                            id,
+                            ['one', 'two', 'three', 'four', 'five', 'six'][
+                              index + 1
+                            ],
+                          )
+                        }
+                        ref={inputRefs[id]}
+                      />
+                    ),
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="text-center">
-              <p className="text-[0.75rem] text-[#8c9097] dark:text-white/50 mt-4 text-danger">
-                <sup>
-                  <i className="ri-asterisk"></i>
-                </sup>
-                Не споделяйте този код със никого!
-              </p>
+
+              <button
+                onClick={handleVerification}
+                className={`w-full ${
+                  isDarkMode
+                    ? 'bg-sky-500/90 hover:bg-sky-600/90'
+                    : 'bg-sky-400/90 hover:bg-sky-500/90'
+                } text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 text-lg shadow-xl`}
+              >
+                Потвърди
+              </button>
+
+              <div className="text-center mt-6">
+                <p
+                  className={`${
+                    isDarkMode ? 'text-slate-300' : 'text-slate-600'
+                  }`}
+                >
+                  Не получихте код?{' '}
+                  <button
+                    onClick={handleResendCode}
+                    disabled={isResending}
+                    className={`font-bold ${
+                      isDarkMode
+                        ? 'text-emerald-400 hover:text-emerald-300'
+                        : 'text-emerald-600 hover:text-emerald-700'
+                    } ${isResending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isResending ? 'Изпращане...' : 'Изпрати отново'}
+                  </button>
+                </p>
+              </div>
+
+              <div className="text-center mt-2">
+                <p
+                  className={`text-sm ${
+                    isDarkMode ? 'text-red-300' : 'text-red-600'
+                  }`}
+                >
+                  <i className="ri-asterisk text-xs align-top"></i> Не
+                  споделяйте този код с никого!
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
+      <Footer />
     </div>
   );
 };
