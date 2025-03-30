@@ -16,6 +16,7 @@ require("dotenv").config();
 const whitelist = [
   "http://localhost:5173",
   "http://localhost:5174",
+  "http://localhost:5176",
   "https://teenbudget.noit.eu"
 ];
 const corsOptions = {
@@ -26,10 +27,10 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
-  optionSuccessStatus: 204
+  optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
@@ -663,23 +664,31 @@ app.get("/get-last-expense-analysis", (req, res) => {
     if (err) return res.status(401).json({ error: "Невалиден токен" });
     const userId = decoded.id;
 
-    db.getLastExpenseAnalysis(userId, (err, analysis) => {
+    db.getLastExpenseAnalysis(userId, (err, results) => {
       if (err) {
-        console.error("Database error:", err);
-        return res.status(500).json({ error: "Грешка в базата данни" });
+        console.error("Error fetching last expense analysis:", err);
+        return res
+          .status(500)
+          .json({ error: "Failed to fetch last expense analysis" });
       }
 
-      if (!analysis || analysis.length === 0) {
-        return res.json({ message: "Няма намерен анализ" });
+      if (results.length === 0) {
+        return res.json({ analysis: null });
       }
 
-      // Преобразуване на JSON стрингове обратно в обекти
-      const result = {
-        ...analysis[0],
-        recommendations: JSON.parse(analysis[0].recommendations)
-      };
-
-      res.json(result);
+      const analysis = results[0];
+      res.json({
+        analysis: {
+          food: analysis.food,
+          transport: analysis.transport,
+          entertainment: analysis.entertainment,
+          sport_and_health: analysis.sport_and_health,
+          education: analysis.education,
+          clothes: analysis.clothes,
+          others: analysis.others,
+          recommendations: JSON.parse(analysis.recommendations)
+        }
+      });
     });
   });
 });

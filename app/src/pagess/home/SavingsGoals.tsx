@@ -490,8 +490,8 @@ const SavingsGoals = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-sky-400">
-                          {goal.currentAmount.toFixed(2)} /{' '}
-                          {goal.targetAmount.toFixed(2)} лв.
+                          {(goal.currentAmount || 0).toFixed(2)} /{' '}
+                          {(goal.targetAmount || 0).toFixed(2)} лв.
                         </p>
                         <p
                           className={`text-sm ${
