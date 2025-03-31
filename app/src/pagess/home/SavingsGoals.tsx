@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import ThemeToggle from '../../components/ThemeToggle';
 import ApexCharts from 'react-apexcharts';
@@ -50,7 +49,6 @@ const incomeRanges = [
 ];
 
 const SavingsGoals = () => {
-  const navigate = useNavigate();
   const { isDarkMode } = useTheme();
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [newGoal, setNewGoal] = useState({
@@ -69,38 +67,6 @@ const SavingsGoals = () => {
     if (savedGoals) {
       setGoals(JSON.parse(savedGoals));
     }
-  }, []);
-
-  // Зареждане на целите от API
-  useEffect(() => {
-    const loadGoals = async () => {
-      try {
-        const token =
-          localStorage.getItem('authToken') ||
-          sessionStorage.getItem('authToken');
-        if (!token) return;
-
-        const response = await fetch(
-          `${(import.meta as any).env.VITE_API_BASE_URL}/savings-goals`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.goals && data.goals.length > 0) {
-            setGoals(data.goals);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading goals:', error);
-      }
-    };
-
-    loadGoals();
   }, []);
 
   // Запазване на целите в localStorage при промяна
@@ -170,66 +136,23 @@ const SavingsGoals = () => {
         monthlyIncome,
       });
 
-      // Изпращане на данните към API
-      const token =
-        localStorage.getItem('authToken') ||
-        sessionStorage.getItem('authToken');
+      const goalToAdd = {
+        id: Date.now(),
+        ...newGoal,
+        targetAmount,
+        currentAmount: 0,
+        milestones,
+        aiAnalysis: analysis,
+      };
 
-      try {
-        const response = await fetch(
-          `${(import.meta as any).env.VITE_API_BASE_URL}/savings-goals`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              name: newGoal.name,
-              targetAmount,
-              currentAmount: 0,
-              deadline: newGoal.deadline,
-              description: newGoal.description,
-              monthlyIncome: newGoal.monthlyIncome,
-              milestones,
-              aiAnalysis: analysis,
-            }),
-          },
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          console.error('API Error:', data);
-          setError(data.error || 'Грешка при запазване на целта');
-          return;
-        }
-
-        console.log('Goal saved to database successfully!');
-
-        const goalToAdd = {
-          id: data.goal.id,
-          ...newGoal,
-          targetAmount,
-          currentAmount: 0,
-          milestones,
-          aiAnalysis: analysis,
-        };
-
-        setGoals((prevGoals) => [...prevGoals, goalToAdd]);
-        setNewGoal({
-          name: '',
-          targetAmount: '',
-          deadline: '',
-          description: '',
-          monthlyIncome: incomeRanges[0],
-        });
-      } catch (error) {
-        console.error('Error saving goal to database:', error);
-        setError(
-          'Възникна грешка при запазването на целта. Моля, опитайте отново.',
-        );
-      }
+      setGoals((prevGoals) => [...prevGoals, goalToAdd]);
+      setNewGoal({
+        name: '',
+        targetAmount: '',
+        deadline: '',
+        description: '',
+        monthlyIncome: incomeRanges[0],
+      });
     } catch (err) {
       setError(
         'Възникна грешка при създаването на целта. Моля, опитайте отново.',
@@ -241,7 +164,8 @@ const SavingsGoals = () => {
   };
 
   const calculateProgress = (goal: SavingsGoal) => {
-    return (goal.currentAmount / goal.targetAmount) * 100;
+    if (!goal.currentAmount || !goal.targetAmount) return 0;
+    return ((goal.currentAmount / goal.targetAmount) * 100).toFixed(2);
   };
 
   const getRemainingDays = (deadline: string) => {
@@ -490,8 +414,8 @@ const SavingsGoals = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-sky-400">
-                          {(goal.currentAmount || 0).toFixed(2)} /{' '}
-                          {(goal.targetAmount || 0).toFixed(2)} лв.
+                          {(goal?.currentAmount ?? 0).toFixed(2)} /{' '}
+                          {(goal?.targetAmount ?? 0).toFixed(2)} лв.
                         </p>
                         <p
                           className={`text-sm ${
