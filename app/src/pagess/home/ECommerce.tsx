@@ -488,7 +488,9 @@ const ECommerce = () => {
                         isDarkMode ? 'bg-slate-600/50' : 'bg-white/50'
                       }`}
                     >
-                      <h4 className="font-medium mb-2">Топ категория</h4>
+                      <h4 className="font-medium mb-2">
+                        Топ категория за разходи:{' '}
+                      </h4>
                       <div className="flex items-center gap-2">
                         <span className="material-icons text-sky-400">
                           <BiCategoryAlt />
