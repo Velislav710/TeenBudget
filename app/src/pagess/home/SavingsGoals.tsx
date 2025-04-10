@@ -48,7 +48,7 @@ const incomeRanges = [
   'над 2000 лв.',
 ];
 
-const SavingsGoals = () => {
+const SavingsGoals: React.FC = () => {
   const { isDarkMode } = useTheme();
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [newGoal, setNewGoal] = useState({
@@ -226,6 +226,25 @@ const SavingsGoals = () => {
     );
   };
 
+  const toggleGoalCompletion = (goalId: number) => {
+    setGoals((prevGoals) =>
+      prevGoals.map((goal) =>
+        goal.id === goalId
+          ? {
+              ...goal,
+              currentAmount:
+                goal.currentAmount >= goal.targetAmount ? 0 : goal.targetAmount,
+              milestones: goal.milestones.map((milestone) => ({
+                ...milestone,
+                isCompleted:
+                  goal.currentAmount >= goal.targetAmount ? false : true,
+              })),
+            }
+          : goal,
+      ),
+    );
+  };
+
   return (
     <div
       className={`min-h-screen ${
@@ -275,85 +294,149 @@ const SavingsGoals = () => {
             </div>
 
             <div
-              className={`mb-8 p-6 rounded-xl ${
+              className={`mb-8 p-8 rounded-2xl ${
                 isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
-              } backdrop-blur-sm shadow-sm`}
+              } backdrop-blur-sm shadow-lg border border-slate-200/20`}
             >
-              <h2 className="text-xl font-bold mb-4">Добави нова цел</h2>
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <span
+                  className={`${isDarkMode ? 'text-white' : 'text-slate-800'}`}
+                >
+                  Добави нова цел
+                </span>
+                <span className="text-sky-400">✨</span>
+              </h2>
+              <p
+                className={`mb-6 text-sm ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              >
+                Започнете да спестявате, като добавите нова цел. Попълнете
+                всички полета и ще получите персонализиран план за постигането
+                ѝ.
+              </p>
               {error && (
-                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+                <div className="mb-6 p-4 bg-red-100/50 text-red-700 rounded-xl border border-red-200">
                   {error}
                 </div>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <input
-                  type="text"
-                  value={newGoal.name}
-                  onChange={(e) =>
-                    setNewGoal({ ...newGoal, name: e.target.value })
-                  }
-                  placeholder="Име на целта"
-                  className={`p-2 rounded-md ${
-                    isDarkMode
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-white text-slate-900'
-                  } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
-                />
-                <input
-                  type="number"
-                  value={newGoal.targetAmount}
-                  onChange={(e) =>
-                    setNewGoal({ ...newGoal, targetAmount: e.target.value })
-                  }
-                  placeholder="Целева сума"
-                  className={`p-2 rounded-md ${
-                    isDarkMode
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-white text-slate-900'
-                  } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
-                />
-                <input
-                  type="date"
-                  value={newGoal.deadline}
-                  onChange={(e) =>
-                    setNewGoal({ ...newGoal, deadline: e.target.value })
-                  }
-                  className={`p-2 rounded-md ${
-                    isDarkMode
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-white text-slate-900'
-                  } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
-                />
-                <select
-                  value={newGoal.monthlyIncome}
-                  onChange={(e) =>
-                    setNewGoal({ ...newGoal, monthlyIncome: e.target.value })
-                  }
-                  className={`p-2 rounded-md ${
-                    isDarkMode
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-white text-slate-900'
-                  } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
-                >
-                  {incomeRanges.map((range) => (
-                    <option key={range} value={range}>
-                      {range}
+                <div>
+                  <input
+                    type="text"
+                    value={newGoal.name}
+                    onChange={(e) =>
+                      setNewGoal({ ...newGoal, name: e.target.value })
+                    }
+                    placeholder="Име на целта"
+                    className={`p-2 rounded-md ${
+                      isDarkMode
+                        ? 'bg-slate-700 text-white'
+                        : 'bg-white text-slate-900'
+                    } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
+                  />
+                  <p
+                    className={`mt-1 text-sm ${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    Име на целта, която искате да постигнете
+                  </p>
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    value={newGoal.targetAmount}
+                    onChange={(e) =>
+                      setNewGoal({ ...newGoal, targetAmount: e.target.value })
+                    }
+                    placeholder="Целева сума"
+                    className={`p-2 rounded-md ${
+                      isDarkMode
+                        ? 'bg-slate-700 text-white'
+                        : 'bg-white text-slate-900'
+                    } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
+                  />
+                  <p
+                    className={`mt-1 text-sm ${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    Общата сума, която искате да спестите
+                  </p>
+                </div>
+                <div>
+                  <input
+                    type="date"
+                    value={newGoal.deadline}
+                    onChange={(e) =>
+                      setNewGoal({ ...newGoal, deadline: e.target.value })
+                    }
+                    className={`p-2 rounded-md ${
+                      isDarkMode
+                        ? 'bg-slate-700 text-white'
+                        : 'bg-white text-slate-900'
+                    } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
+                  />
+                  <p
+                    className={`mt-1 text-sm ${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    Кога искате да постигнете целта
+                  </p>
+                </div>
+                <div>
+                  <select
+                    value={newGoal.monthlyIncome}
+                    onChange={(e) =>
+                      setNewGoal({ ...newGoal, monthlyIncome: e.target.value })
+                    }
+                    className={`p-2 rounded-md ${
+                      isDarkMode
+                        ? 'bg-slate-700 text-white'
+                        : 'bg-white text-slate-900'
+                    } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
+                  >
+                    <option value="" disabled>
+                      Месечен доход
                     </option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  value={newGoal.description}
-                  onChange={(e) =>
-                    setNewGoal({ ...newGoal, description: e.target.value })
-                  }
-                  placeholder="Описание"
-                  className={`p-2 rounded-md ${
-                    isDarkMode
-                      ? 'bg-slate-700 text-white'
-                      : 'bg-white text-slate-900'
-                  } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
-                />
+                    {incomeRanges.map((range) => (
+                      <option key={range} value={range}>
+                        {range}
+                      </option>
+                    ))}
+                  </select>
+                  <p
+                    className={`mt-1 text-sm ${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    Вашият месечен доход за по-точни изчисления
+                  </p>
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    value={newGoal.description}
+                    onChange={(e) =>
+                      setNewGoal({ ...newGoal, description: e.target.value })
+                    }
+                    placeholder="Описание"
+                    className={`p-2 rounded-md ${
+                      isDarkMode
+                        ? 'bg-slate-700 text-white'
+                        : 'bg-white text-slate-900'
+                    } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
+                  />
+                  <p
+                    className={`mt-1 text-sm ${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
+                    Допълнителни бележки за целта
+                  </p>
+                </div>
               </div>
               <button
                 onClick={handleAddGoal}
@@ -370,195 +453,404 @@ const SavingsGoals = () => {
               </button>
             </div>
 
-            {goals.length === 0 ? (
+            {/* Графика за цели */}
+            <div
+              className={`mb-8 p-8 rounded-2xl ${
+                isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
+              } backdrop-blur-sm shadow-lg border border-slate-200/20`}
+            >
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <span
+                  className={`${isDarkMode ? 'text-white' : 'text-slate-800'}`}
+                >
+                  Прогрес на целите
+                </span>
+                <span className="text-sky-400">📊</span>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div
+                  className={`p-6 rounded-xl ${
+                    isDarkMode ? 'bg-slate-700/30' : 'bg-slate-50/30'
+                  }`}
+                >
+                  <h3 className="text-lg font-semibold mb-4 text-sky-500">
+                    Активни цели
+                  </h3>
+                  <p className="text-3xl font-bold mb-2">
+                    {
+                      goals.filter(
+                        (goal) => goal.currentAmount < goal.targetAmount,
+                      ).length
+                    }
+                  </p>
+                  <p
+                    className={`text-sm ${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                    }`}
+                  >
+                    Цели в процес на изпълнение
+                  </p>
+                </div>
+                <div
+                  className={`p-6 rounded-xl ${
+                    isDarkMode ? 'bg-slate-700/30' : 'bg-slate-50/30'
+                  }`}
+                >
+                  <h3 className="text-lg font-semibold mb-4 text-emerald-500">
+                    Постигнати цели
+                  </h3>
+                  <p className="text-3xl font-bold mb-2">
+                    {
+                      goals.filter(
+                        (goal) => goal.currentAmount >= goal.targetAmount,
+                      ).length
+                    }
+                  </p>
+                  <p
+                    className={`text-sm ${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                    }`}
+                  >
+                    Успешно завършени цели
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Активни цели */}
               <div
-                className={`p-12 text-center rounded-xl ${
+                className={`p-6 rounded-xl ${
                   isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
                 } backdrop-blur-sm shadow-sm`}
               >
-                <p
-                  className={`text-lg ${
-                    isDarkMode ? 'text-slate-300' : 'text-slate-600'
+                <h2
+                  className={`text-xl font-bold mb-4 ${
+                    isDarkMode ? 'text-white' : 'text-slate-800'
                   }`}
                 >
-                  Все още нямате добавени цели за спестяване.
-                </p>
-                <p
-                  className={`mt-2 ${
-                    isDarkMode ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  Добавете първата си цел, за да получите персонализиран план за
-                  спестяване!
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {goals.map((goal) => (
-                  <div
-                    key={goal.id}
-                    className={`p-6 rounded-xl ${
-                      isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
-                    } backdrop-blur-sm shadow-sm`}
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold mb-2">{goal.name}</h3>
-                        <p
-                          className={
-                            isDarkMode ? 'text-slate-400' : 'text-slate-600'
-                          }
-                        >
-                          {goal.description}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-semibold text-sky-400">
-                          {(goal?.currentAmount ?? 0).toFixed(2)} /{' '}
-                          {(goal?.targetAmount ?? 0).toFixed(2)} лв.
-                        </p>
-                        <p
-                          className={`text-sm ${
-                            isDarkMode ? 'text-slate-400' : 'text-slate-600'
-                          }`}
-                        >
-                          Остават {getRemainingDays(goal.deadline)} дни
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mb-4">
-                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-sky-400 transition-all duration-300"
-                          style={{ width: `${calculateProgress(goal)}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 mb-4">
-                      <input
-                        type="number"
-                        placeholder="Добави сума"
-                        className={`p-2 rounded-md ${
-                          isDarkMode
-                            ? 'bg-slate-700 text-white'
-                            : 'bg-white text-slate-900'
-                        } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          if (!isNaN(value) && value >= 0) {
-                            updateGoalAmount(goal.id, value);
-                          }
-                        }}
-                      />
-                      <button
-                        onClick={() => deleteGoal(goal.id)}
-                        className="px-3 py-2 rounded-md bg-red-500/80 hover:bg-red-600/80 text-white transition-all duration-200"
-                      >
-                        Изтрий
-                      </button>
-                    </div>
-
-                    {goal.aiAnalysis && (
+                  Активни цели
+                </h2>
+                <div className="space-y-4">
+                  {goals
+                    .filter((goal) => goal.currentAmount < goal.targetAmount)
+                    .map((goal) => (
                       <div
-                        className={`mt-4 p-4 rounded-lg ${
+                        key={goal.id}
+                        className={`p-4 rounded-lg ${
                           isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
-                        }`}
+                        } backdrop-blur-sm`}
                       >
-                        <h4 className="font-semibold mb-4">
-                          AI План за спестяване
-                        </h4>
-
-                        <div className="space-y-4">
-                          <div>
-                            <h5 className="font-medium mb-2">Основен план</h5>
-                            <p className="text-lg mb-2">
-                              Месечна цел:{' '}
-                              <span className="text-sky-400 font-semibold">
-                                {goal.aiAnalysis.mainPlan.monthlyTarget.toFixed(
-                                  2,
-                                )}{' '}
-                                лв.
-                              </span>
-                            </p>
-                            <p className="mb-2">
-                              {goal.aiAnalysis.mainPlan.timeline}
-                            </p>
-                            <ul className="space-y-1">
-                              {goal.aiAnalysis.mainPlan.steps.map(
-                                (step, index) => (
-                                  <li
-                                    key={index}
-                                    className="flex items-start gap-2"
-                                  >
-                                    <span className="text-sky-400">•</span>
-                                    <span>{step}</span>
-                                  </li>
-                                ),
-                              )}
-                            </ul>
-                          </div>
-
-                          <div>
-                            <h5 className="font-medium mb-2">Междинни цели</h5>
-                            <div className="space-y-2">
-                              {goal.milestones.map((milestone, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center gap-2"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={milestone.isCompleted}
-                                    onChange={() =>
-                                      updateMilestoneProgress(goal.id, index)
-                                    }
-                                    className="rounded text-sky-400"
-                                  />
-                                  <span>
-                                    {milestone.description}:{' '}
-                                    {milestone.targetAmount.toFixed(2)} лв. до{' '}
-                                    {new Date(
-                                      milestone.date,
-                                    ).toLocaleDateString('bg-BG')}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <h5 className="font-medium mb-2">
-                              Алтернативни методи
-                            </h5>
-                            <ul className="space-y-1">
-                              {goal.aiAnalysis.alternativeMethods.suggestions.map(
-                                (suggestion, index) => (
-                                  <li
-                                    key={index}
-                                    className="flex items-start gap-2"
-                                  >
-                                    <span className="text-sky-400">•</span>
-                                    <span>{suggestion}</span>
-                                  </li>
-                                ),
-                              )}
-                            </ul>
-                            <p className="mt-2 text-sm text-sky-400">
-                              {
-                                goal.aiAnalysis.alternativeMethods
-                                  .expectedResults
-                              }
-                            </p>
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-lg font-semibold">{goal.name}</h3>
+                          <p className="text-sm text-sky-400">
+                            {(goal?.currentAmount ?? 0).toFixed(2)} /{' '}
+                            {(goal?.targetAmount ?? 0).toFixed(2)} лв.
+                          </p>
+                        </div>
+                        <div className="mb-2">
+                          <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-sky-400 transition-all duration-300"
+                              style={{
+                                width: `${calculateProgress(goal)}%`,
+                              }}
+                            />
                           </div>
                         </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            placeholder="Добави сума"
+                            className={`p-1 text-sm rounded-md ${
+                              isDarkMode
+                                ? 'bg-slate-700 text-white'
+                                : 'bg-white text-slate-900'
+                            } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              if (!isNaN(value) && value >= 0) {
+                                updateGoalAmount(goal.id, value);
+                              }
+                            }}
+                          />
+                          <button
+                            onClick={() => toggleGoalCompletion(goal.id)}
+                            className="px-2 py-1 text-sm rounded-md bg-sky-500/80 hover:bg-sky-600/80 text-white transition-all duration-200"
+                          >
+                            Маркирай като завършена
+                          </button>
+                          <button
+                            onClick={() => deleteGoal(goal.id)}
+                            className="px-2 py-1 text-sm rounded-md bg-red-500/80 hover:bg-red-600/80 text-white transition-all duration-200"
+                          >
+                            Изтрий
+                          </button>
+                        </div>
+
+                        {goal.aiAnalysis && (
+                          <div
+                            className={`mt-4 p-4 rounded-lg ${
+                              isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
+                            }`}
+                          >
+                            <h4 className="font-semibold mb-4">
+                              AI План за спестяване
+                            </h4>
+                            <div className="space-y-4">
+                              <div>
+                                <h5 className="font-medium mb-2">
+                                  Основен план
+                                </h5>
+                                <p className="text-sm mb-2">
+                                  Месечна цел:{' '}
+                                  <span className="text-sky-400 font-semibold">
+                                    {goal.aiAnalysis.mainPlan.monthlyTarget.toFixed(
+                                      2,
+                                    )}{' '}
+                                    лв.
+                                  </span>
+                                </p>
+                                <p className="text-sm mb-2">
+                                  {goal.aiAnalysis.mainPlan.timeline}
+                                </p>
+                                <ul className="space-y-1 text-sm">
+                                  {goal.aiAnalysis.mainPlan.steps.map(
+                                    (step, index) => (
+                                      <li
+                                        key={index}
+                                        className="flex items-start gap-2"
+                                      >
+                                        <span className="text-sky-400">•</span>
+                                        <span>{step}</span>
+                                      </li>
+                                    ),
+                                  )}
+                                </ul>
+                              </div>
+
+                              <div>
+                                <h5 className="font-medium mb-2">
+                                  Междинни цели
+                                </h5>
+                                <div className="space-y-2">
+                                  {goal.milestones.map((milestone, index) => (
+                                    <div
+                                      key={index}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={milestone.isCompleted}
+                                        onChange={() =>
+                                          updateMilestoneProgress(
+                                            goal.id,
+                                            index,
+                                          )
+                                        }
+                                        className="rounded text-sky-400"
+                                      />
+                                      <span className="text-sm">
+                                        {milestone.description}:{' '}
+                                        {milestone.targetAmount.toFixed(2)} лв.
+                                        до{' '}
+                                        {new Date(
+                                          milestone.date,
+                                        ).toLocaleDateString('bg-BG')}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div>
+                                <h5 className="font-medium mb-2">
+                                  Алтернативни методи
+                                </h5>
+                                <ul className="space-y-1 text-sm">
+                                  {goal.aiAnalysis.alternativeMethods.suggestions.map(
+                                    (suggestion, index) => (
+                                      <li
+                                        key={index}
+                                        className="flex items-start gap-2"
+                                      >
+                                        <span className="text-sky-400">•</span>
+                                        <span>{suggestion}</span>
+                                      </li>
+                                    ),
+                                  )}
+                                </ul>
+                                <p className="mt-2 text-sm text-sky-400">
+                                  {
+                                    goal.aiAnalysis.alternativeMethods
+                                      .expectedResults
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
+                    ))}
+                </div>
               </div>
-            )}
+
+              {/* Постигнати цели */}
+              <div
+                className={`p-6 rounded-xl ${
+                  isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
+                } backdrop-blur-sm shadow-sm`}
+              >
+                <h2
+                  className={`text-xl font-bold mb-4 ${
+                    isDarkMode ? 'text-white' : 'text-slate-800'
+                  }`}
+                >
+                  Постигнати цели
+                </h2>
+                <div className="space-y-4">
+                  {goals
+                    .filter((goal) => goal.currentAmount >= goal.targetAmount)
+                    .map((goal) => (
+                      <div
+                        key={goal.id}
+                        className={`p-4 rounded-lg ${
+                          isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
+                        } backdrop-blur-sm`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-lg font-semibold">{goal.name}</h3>
+                          <p className="text-sm text-emerald-400">
+                            {(goal?.currentAmount ?? 0).toFixed(2)} /{' '}
+                            {(goal?.targetAmount ?? 0).toFixed(2)} лв.
+                          </p>
+                        </div>
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => toggleGoalCompletion(goal.id)}
+                            className="px-2 py-1 text-sm rounded-md bg-emerald-500/80 hover:bg-emerald-600/80 text-white transition-all duration-200"
+                          >
+                            Върни в активни
+                          </button>
+                          <button
+                            onClick={() => deleteGoal(goal.id)}
+                            className="ml-2 px-2 py-1 text-sm rounded-md bg-red-500/80 hover:bg-red-600/80 text-white transition-all duration-200"
+                          >
+                            Изтрий
+                          </button>
+                        </div>
+
+                        {goal.aiAnalysis && (
+                          <div
+                            className={`mt-4 p-4 rounded-lg ${
+                              isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
+                            }`}
+                          >
+                            <h4 className="font-semibold mb-4">
+                              AI План за спестяване
+                            </h4>
+                            <div className="space-y-4">
+                              <div>
+                                <h5 className="font-medium mb-2">
+                                  Основен план
+                                </h5>
+                                <p className="text-sm mb-2">
+                                  Месечна цел:{' '}
+                                  <span className="text-emerald-400 font-semibold">
+                                    {goal.aiAnalysis.mainPlan.monthlyTarget.toFixed(
+                                      2,
+                                    )}{' '}
+                                    лв.
+                                  </span>
+                                </p>
+                                <p className="text-sm mb-2">
+                                  {goal.aiAnalysis.mainPlan.timeline}
+                                </p>
+                                <ul className="space-y-1 text-sm">
+                                  {goal.aiAnalysis.mainPlan.steps.map(
+                                    (step, index) => (
+                                      <li
+                                        key={index}
+                                        className="flex items-start gap-2"
+                                      >
+                                        <span className="text-emerald-400">
+                                          •
+                                        </span>
+                                        <span>{step}</span>
+                                      </li>
+                                    ),
+                                  )}
+                                </ul>
+                              </div>
+
+                              <div>
+                                <h5 className="font-medium mb-2">
+                                  Междинни цели
+                                </h5>
+                                <div className="space-y-2">
+                                  {goal.milestones.map((milestone, index) => (
+                                    <div
+                                      key={index}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={milestone.isCompleted}
+                                        onChange={() =>
+                                          updateMilestoneProgress(
+                                            goal.id,
+                                            index,
+                                          )
+                                        }
+                                        className="rounded text-emerald-400"
+                                      />
+                                      <span className="text-sm">
+                                        {milestone.description}:{' '}
+                                        {milestone.targetAmount.toFixed(2)} лв.
+                                        до{' '}
+                                        {new Date(
+                                          milestone.date,
+                                        ).toLocaleDateString('bg-BG')}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div>
+                                <h5 className="font-medium mb-2">
+                                  Алтернативни методи
+                                </h5>
+                                <ul className="space-y-1 text-sm">
+                                  {goal.aiAnalysis.alternativeMethods.suggestions.map(
+                                    (suggestion, index) => (
+                                      <li
+                                        key={index}
+                                        className="flex items-start gap-2"
+                                      >
+                                        <span className="text-emerald-400">
+                                          •
+                                        </span>
+                                        <span>{suggestion}</span>
+                                      </li>
+                                    ),
+                                  )}
+                                </ul>
+                                <p className="mt-2 text-sm text-emerald-400">
+                                  {
+                                    goal.aiAnalysis.alternativeMethods
+                                      .expectedResults
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
           </main>
         </div>
         <Footer />
