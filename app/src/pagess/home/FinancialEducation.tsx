@@ -651,29 +651,29 @@ const FinancialEducation = () => {
                   isDarkMode ? 'text-white' : 'text-slate-800'
                 }`}
               >
-                Финансов Симулатор
+                Финансово обучение
               </h1>
               <ThemeToggle />
             </div>
-            {!showTutorial && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                onClick={() => setShowTutorial(true)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                  isDarkMode
-                    ? 'bg-slate-700 hover:bg-slate-600'
-                    : 'bg-slate-100 hover:bg-slate-200'
-                }`}
-              >
-                <FaGraduationCap className="text-violet-400" />
-                <span>Уроци</span>
-              </motion.button>
-            )}
+            <button
+              onClick={() => {
+                localStorage.removeItem('authToken');
+                sessionStorage.removeItem('authToken');
+                window.location.href = '/login';
+              }}
+              className={`px-6 py-2 rounded-md ${
+                isDarkMode
+                  ? 'bg-rose-500/90 hover:bg-rose-600/90'
+                  : 'bg-rose-400/90 hover:bg-rose-500/90'
+              } text-white transition-all duration-200`}
+              title="Изход от профила"
+            >
+              Изход
+            </button>
           </div>
         </header>
 
-        <main className="pt-20 px-8 pb-8">
+        <div className="max-w-7xl mx-auto px-8 py-8 pt-20">
           {showTutorial ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -956,7 +956,7 @@ const FinancialEducation = () => {
               )}
             </>
           )}
-        </main>
+        </div>
         <Footer />
       </div>
     </div>

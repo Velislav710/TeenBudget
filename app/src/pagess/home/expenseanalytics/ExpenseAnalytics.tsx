@@ -75,46 +75,21 @@ const ExpenseAnalytics = () => {
               </h1>
               <ThemeToggle />
             </div>
-            <div className="flex justify-end items-center gap-4">
-              <button
-                onClick={() =>
-                  generateAnalysis(
-                    selectedPeriod,
-                    setIsGeneratingAnalysis,
-                    setLoading,
-                    setAiAnalysis,
-                    transactions,
-                  )
-                }
-                disabled={isGeneratingAnalysis}
-                className={`px-6 py-2 rounded-lg ${
-                  isDarkMode
-                    ? 'bg-sky-500 hover:bg-sky-600'
-                    : 'bg-sky-400 hover:bg-sky-500'
-                } text-white transition-all duration-200 ${
-                  isGeneratingAnalysis ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                {isGeneratingAnalysis
-                  ? 'Генериране на анализ...'
-                  : 'Генерирай нов AI анализ'}
-              </button>
-              <button
-                onClick={() => {
-                  localStorage.removeItem('authToken');
-                  sessionStorage.removeItem('authToken');
-                  window.location.href = '/login';
-                }}
-                className={`px-6 py-2 rounded-md ${
-                  isDarkMode
-                    ? 'bg-rose-500/90 hover:bg-rose-600/90'
-                    : 'bg-rose-400/90 hover:bg-rose-500/90'
-                } text-white transition-all duration-200`}
-                title="Изход от профила"
-              >
-                Изход
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem('authToken');
+                sessionStorage.removeItem('authToken');
+                window.location.href = '/login';
+              }}
+              className={`px-6 py-2 rounded-md ${
+                isDarkMode
+                  ? 'bg-rose-500/90 hover:bg-rose-600/90'
+                  : 'bg-rose-400/90 hover:bg-rose-500/90'
+              } text-white transition-all duration-200`}
+              title="Изход от профила"
+            >
+              Изход
+            </button>
           </div>
         </header>
 
@@ -136,7 +111,7 @@ const ExpenseAnalytics = () => {
                       isDarkMode ? 'text-white' : 'text-slate-800'
                     }`}
                   >
-                    AI Анализ на финансовото състояние
+                    Последен AI Анализ на финансовото Ви състояние:
                   </h2>
 
                   <div className="space-y-8">
@@ -507,6 +482,31 @@ const ExpenseAnalytics = () => {
           )}
         </div>
         <Footer />
+        <div className="fixed bottom-4 right-4">
+          <button
+            onClick={() =>
+              generateAnalysis(
+                selectedPeriod,
+                setIsGeneratingAnalysis,
+                setLoading,
+                setAiAnalysis,
+                transactions,
+              )
+            }
+            disabled={isGeneratingAnalysis}
+            className={`px-6 py-3 rounded-full ${
+              isDarkMode
+                ? 'bg-sky-500 hover:bg-sky-600'
+                : 'bg-sky-400 hover:bg-sky-500'
+            } text-white transition-all duration-200 ${
+              isGeneratingAnalysis ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {isGeneratingAnalysis
+              ? 'Генериране на анализ...'
+              : 'Генерирай нов AI анализ'}
+          </button>
+        </div>
       </div>
     </div>
   );

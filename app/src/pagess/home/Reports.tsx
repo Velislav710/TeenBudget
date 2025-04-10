@@ -39,6 +39,7 @@ const Reports = () => {
   const [email, setEmail] = useState('');
   const [showEmailSuccess, setShowEmailSuccess] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   useEffect(() => {
     if (dateRange.start && dateRange.end) {
@@ -130,6 +131,28 @@ const Reports = () => {
     }
   };
 
+  const handleAIAnalysis = async () => {
+    setIsAiLoading(true);
+    try {
+      const response = await fetch('/api/ai-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          start: dateRange.start,
+          end: dateRange.end,
+        }),
+      });
+      const data = await response.json();
+      console.log('AI Analysis Result:', data);
+    } catch (error) {
+      console.error('Error handling AI analysis:', error);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   const chartOptions = {
     chart: {
       type: 'bar' as const,
@@ -218,6 +241,21 @@ const Reports = () => {
               </h1>
               <ThemeToggle />
             </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem('authToken');
+                sessionStorage.removeItem('authToken');
+                window.location.href = '/login';
+              }}
+              className={`px-6 py-2 rounded-md ${
+                isDarkMode
+                  ? 'bg-rose-500/90 hover:bg-rose-600/90'
+                  : 'bg-rose-400/90 hover:bg-rose-500/90'
+              } text-white transition-all duration-200`}
+              title="Изход от профила"
+            >
+              Изход
+            </button>
           </div>
         </header>
 
