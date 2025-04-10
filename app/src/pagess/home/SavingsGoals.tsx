@@ -60,6 +60,9 @@ const SavingsGoals: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedGoals, setExpandedGoals] = useState<{
+    [key: number]: boolean;
+  }>({});
 
   // Зареждане на целите от localStorage при първоначално зареждане
   useEffect(() => {
@@ -243,6 +246,13 @@ const SavingsGoals: React.FC = () => {
           : goal,
       ),
     );
+  };
+
+  const toggleGoalExpansion = (goalId: number) => {
+    setExpandedGoals((prev) => ({
+      ...prev,
+      [goalId]: !prev[goalId],
+    }));
   };
 
   return (
@@ -541,155 +551,190 @@ const SavingsGoals: React.FC = () => {
                           isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
                         } backdrop-blur-sm`}
                       >
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-lg font-semibold">{goal.name}</h3>
-                          <p className="text-sm text-sky-400">
+                        <div
+                          className="flex justify-between items-start mb-2 cursor-pointer"
+                          onClick={() => toggleGoalExpansion(goal.id)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-semibold">
+                              {goal.name}
+                            </h3>
+                            <span
+                              className={`transform transition-transform duration-200 ${
+                                expandedGoals[goal.id] ? 'rotate-90' : ''
+                              }`}
+                            >
+                              ▶
+                            </span>
+                          </div>
+                          <p
+                            className={`text-sm ${
+                              goal.currentAmount >= goal.targetAmount
+                                ? 'text-emerald-400'
+                                : 'text-sky-400'
+                            }`}
+                          >
                             {(goal?.currentAmount ?? 0).toFixed(2)} /{' '}
                             {(goal?.targetAmount ?? 0).toFixed(2)} лв.
                           </p>
                         </div>
-                        <div className="mb-2">
-                          <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-sky-400 transition-all duration-300"
-                              style={{
-                                width: `${calculateProgress(goal)}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <input
-                            type="number"
-                            placeholder="Добави сума"
-                            className={`p-1 text-sm rounded-md ${
-                              isDarkMode
-                                ? 'bg-slate-700 text-white'
-                                : 'bg-white text-slate-900'
-                            } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value);
-                              if (!isNaN(value) && value >= 0) {
-                                updateGoalAmount(goal.id, value);
-                              }
-                            }}
-                          />
-                          <button
-                            onClick={() => toggleGoalCompletion(goal.id)}
-                            className="px-2 py-1 text-sm rounded-md bg-sky-500/80 hover:bg-sky-600/80 text-white transition-all duration-200"
-                          >
-                            Маркирай като завършена
-                          </button>
-                          <button
-                            onClick={() => deleteGoal(goal.id)}
-                            className="px-2 py-1 text-sm rounded-md bg-red-500/80 hover:bg-red-600/80 text-white transition-all duration-200"
-                          >
-                            Изтрий
-                          </button>
-                        </div>
 
-                        {goal.aiAnalysis && (
-                          <div
-                            className={`mt-4 p-4 rounded-lg ${
-                              isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
-                            }`}
-                          >
-                            <h4 className="font-semibold mb-4">
-                              AI План за спестяване
-                            </h4>
-                            <div className="space-y-4">
-                              <div>
-                                <h5 className="font-medium mb-2">
-                                  Основен план
-                                </h5>
-                                <p className="text-sm mb-2">
-                                  Месечна цел:{' '}
-                                  <span className="text-sky-400 font-semibold">
-                                    {goal.aiAnalysis.mainPlan.monthlyTarget.toFixed(
-                                      2,
-                                    )}{' '}
-                                    лв.
-                                  </span>
-                                </p>
-                                <p className="text-sm mb-2">
-                                  {goal.aiAnalysis.mainPlan.timeline}
-                                </p>
-                                <ul className="space-y-1 text-sm">
-                                  {goal.aiAnalysis.mainPlan.steps.map(
-                                    (step, index) => (
-                                      <li
-                                        key={index}
-                                        className="flex items-start gap-2"
-                                      >
-                                        <span className="text-sky-400">•</span>
-                                        <span>{step}</span>
-                                      </li>
-                                    ),
-                                  )}
-                                </ul>
-                              </div>
-
-                              <div>
-                                <h5 className="font-medium mb-2">
-                                  Междинни цели
-                                </h5>
-                                <div className="space-y-2">
-                                  {goal.milestones.map((milestone, index) => (
-                                    <div
-                                      key={index}
-                                      className="flex items-center gap-2"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={milestone.isCompleted}
-                                        onChange={() =>
-                                          updateMilestoneProgress(
-                                            goal.id,
-                                            index,
-                                          )
-                                        }
-                                        className="rounded text-sky-400"
-                                      />
-                                      <span className="text-sm">
-                                        {milestone.description}:{' '}
-                                        {milestone.targetAmount.toFixed(2)} лв.
-                                        до{' '}
-                                        {new Date(
-                                          milestone.date,
-                                        ).toLocaleDateString('bg-BG')}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div>
-                                <h5 className="font-medium mb-2">
-                                  Алтернативни методи
-                                </h5>
-                                <ul className="space-y-1 text-sm">
-                                  {goal.aiAnalysis.alternativeMethods.suggestions.map(
-                                    (suggestion, index) => (
-                                      <li
-                                        key={index}
-                                        className="flex items-start gap-2"
-                                      >
-                                        <span className="text-sky-400">•</span>
-                                        <span>{suggestion}</span>
-                                      </li>
-                                    ),
-                                  )}
-                                </ul>
-                                <p className="mt-2 text-sm text-sky-400">
-                                  {
-                                    goal.aiAnalysis.alternativeMethods
-                                      .expectedResults
-                                  }
-                                </p>
-                              </div>
+                        <div
+                          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                            expandedGoals[goal.id]
+                              ? 'max-h-[2000px]'
+                              : 'max-h-0'
+                          }`}
+                        >
+                          <div className="mb-2">
+                            <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-sky-400 transition-all duration-300"
+                                style={{
+                                  width: `${calculateProgress(goal)}%`,
+                                }}
+                              />
                             </div>
                           </div>
-                        )}
+                          <div className="flex gap-2">
+                            <input
+                              type="number"
+                              placeholder="Добави сума"
+                              className={`p-1 text-sm rounded-md ${
+                                isDarkMode
+                                  ? 'bg-slate-700 text-white'
+                                  : 'bg-white text-slate-900'
+                              } border border-slate-300 focus:ring-2 focus:ring-sky-300`}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                if (!isNaN(value) && value >= 0) {
+                                  updateGoalAmount(goal.id, value);
+                                }
+                              }}
+                            />
+                            <button
+                              onClick={() => toggleGoalCompletion(goal.id)}
+                              className="px-2 py-1 text-sm rounded-md bg-sky-500/80 hover:bg-sky-600/80 text-white transition-all duration-200"
+                            >
+                              Маркирай като завършена
+                            </button>
+                            <button
+                              onClick={() => deleteGoal(goal.id)}
+                              className="px-2 py-1 text-sm rounded-md bg-red-500/80 hover:bg-red-600/80 text-white transition-all duration-200"
+                            >
+                              Изтрий
+                            </button>
+                          </div>
+
+                          {goal.aiAnalysis && (
+                            <div
+                              className={`mt-4 p-4 rounded-lg ${
+                                isDarkMode
+                                  ? 'bg-slate-700/50'
+                                  : 'bg-slate-50/50'
+                              }`}
+                            >
+                              <h4 className="font-semibold mb-4">
+                                AI План за спестяване
+                              </h4>
+                              <div className="space-y-4">
+                                <div>
+                                  <h5 className="font-medium mb-2">
+                                    Основен план
+                                  </h5>
+                                  <p className="text-sm mb-2">
+                                    Месечна цел:{' '}
+                                    <span className="text-sky-400 font-semibold">
+                                      {goal.aiAnalysis.mainPlan.monthlyTarget.toFixed(
+                                        2,
+                                      )}{' '}
+                                      лв.
+                                    </span>
+                                  </p>
+                                  <p className="text-sm mb-2">
+                                    {goal.aiAnalysis.mainPlan.timeline}
+                                  </p>
+                                  <ul className="space-y-1 text-sm">
+                                    {goal.aiAnalysis.mainPlan.steps.map(
+                                      (step, index) => (
+                                        <li
+                                          key={index}
+                                          className="flex items-start gap-2"
+                                        >
+                                          <span className="text-sky-400">
+                                            •
+                                          </span>
+                                          <span>{step}</span>
+                                        </li>
+                                      ),
+                                    )}
+                                  </ul>
+                                </div>
+
+                                <div>
+                                  <h5 className="font-medium mb-2">
+                                    Междинни цели
+                                  </h5>
+                                  <div className="space-y-2">
+                                    {goal.milestones.map((milestone, index) => (
+                                      <div
+                                        key={index}
+                                        className="flex items-center gap-2"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={milestone.isCompleted}
+                                          onChange={() =>
+                                            updateMilestoneProgress(
+                                              goal.id,
+                                              index,
+                                            )
+                                          }
+                                          className="rounded text-sky-400"
+                                        />
+                                        <span className="text-sm">
+                                          {milestone.description}:{' '}
+                                          {milestone.targetAmount.toFixed(2)}{' '}
+                                          лв. до{' '}
+                                          {new Date(
+                                            milestone.date,
+                                          ).toLocaleDateString('bg-BG')}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h5 className="font-medium mb-2">
+                                    Алтернативни методи
+                                  </h5>
+                                  <ul className="space-y-1 text-sm">
+                                    {goal.aiAnalysis.alternativeMethods.suggestions.map(
+                                      (suggestion, index) => (
+                                        <li
+                                          key={index}
+                                          className="flex items-start gap-2"
+                                        >
+                                          <span className="text-sky-400">
+                                            •
+                                          </span>
+                                          <span>{suggestion}</span>
+                                        </li>
+                                      ),
+                                    )}
+                                  </ul>
+                                  <p className="mt-2 text-sm text-sky-400">
+                                    {
+                                      goal.aiAnalysis.alternativeMethods
+                                        .expectedResults
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                 </div>
@@ -718,134 +763,175 @@ const SavingsGoals: React.FC = () => {
                           isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
                         } backdrop-blur-sm`}
                       >
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-lg font-semibold">{goal.name}</h3>
-                          <p className="text-sm text-emerald-400">
+                        <div
+                          className="flex justify-between items-start mb-2 cursor-pointer"
+                          onClick={() => toggleGoalExpansion(goal.id)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-semibold">
+                              {goal.name}
+                            </h3>
+                            <span
+                              className={`transform transition-transform duration-200 ${
+                                expandedGoals[goal.id] ? 'rotate-90' : ''
+                              }`}
+                            >
+                              ▶
+                            </span>
+                          </div>
+                          <p
+                            className={`text-sm ${
+                              goal.currentAmount >= goal.targetAmount
+                                ? 'text-emerald-400'
+                                : 'text-sky-400'
+                            }`}
+                          >
                             {(goal?.currentAmount ?? 0).toFixed(2)} /{' '}
                             {(goal?.targetAmount ?? 0).toFixed(2)} лв.
                           </p>
                         </div>
-                        <div className="flex justify-end">
-                          <button
-                            onClick={() => toggleGoalCompletion(goal.id)}
-                            className="px-2 py-1 text-sm rounded-md bg-emerald-500/80 hover:bg-emerald-600/80 text-white transition-all duration-200"
-                          >
-                            Върни в активни
-                          </button>
-                          <button
-                            onClick={() => deleteGoal(goal.id)}
-                            className="ml-2 px-2 py-1 text-sm rounded-md bg-red-500/80 hover:bg-red-600/80 text-white transition-all duration-200"
-                          >
-                            Изтрий
-                          </button>
-                        </div>
 
-                        {goal.aiAnalysis && (
-                          <div
-                            className={`mt-4 p-4 rounded-lg ${
-                              isDarkMode ? 'bg-slate-700/50' : 'bg-slate-50/50'
-                            }`}
-                          >
-                            <h4 className="font-semibold mb-4">
-                              AI План за спестяване
-                            </h4>
-                            <div className="space-y-4">
-                              <div>
-                                <h5 className="font-medium mb-2">
-                                  Основен план
-                                </h5>
-                                <p className="text-sm mb-2">
-                                  Месечна цел:{' '}
-                                  <span className="text-emerald-400 font-semibold">
-                                    {goal.aiAnalysis.mainPlan.monthlyTarget.toFixed(
-                                      2,
-                                    )}{' '}
-                                    лв.
-                                  </span>
-                                </p>
-                                <p className="text-sm mb-2">
-                                  {goal.aiAnalysis.mainPlan.timeline}
-                                </p>
-                                <ul className="space-y-1 text-sm">
-                                  {goal.aiAnalysis.mainPlan.steps.map(
-                                    (step, index) => (
-                                      <li
-                                        key={index}
-                                        className="flex items-start gap-2"
-                                      >
-                                        <span className="text-emerald-400">
-                                          •
-                                        </span>
-                                        <span>{step}</span>
-                                      </li>
-                                    ),
-                                  )}
-                                </ul>
-                              </div>
-
-                              <div>
-                                <h5 className="font-medium mb-2">
-                                  Междинни цели
-                                </h5>
-                                <div className="space-y-2">
-                                  {goal.milestones.map((milestone, index) => (
-                                    <div
-                                      key={index}
-                                      className="flex items-center gap-2"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={milestone.isCompleted}
-                                        onChange={() =>
-                                          updateMilestoneProgress(
-                                            goal.id,
-                                            index,
-                                          )
-                                        }
-                                        className="rounded text-emerald-400"
-                                      />
-                                      <span className="text-sm">
-                                        {milestone.description}:{' '}
-                                        {milestone.targetAmount.toFixed(2)} лв.
-                                        до{' '}
-                                        {new Date(
-                                          milestone.date,
-                                        ).toLocaleDateString('bg-BG')}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div>
-                                <h5 className="font-medium mb-2">
-                                  Алтернативни методи
-                                </h5>
-                                <ul className="space-y-1 text-sm">
-                                  {goal.aiAnalysis.alternativeMethods.suggestions.map(
-                                    (suggestion, index) => (
-                                      <li
-                                        key={index}
-                                        className="flex items-start gap-2"
-                                      >
-                                        <span className="text-emerald-400">
-                                          •
-                                        </span>
-                                        <span>{suggestion}</span>
-                                      </li>
-                                    ),
-                                  )}
-                                </ul>
-                                <p className="mt-2 text-sm text-emerald-400">
-                                  {
-                                    goal.aiAnalysis.alternativeMethods
-                                      .expectedResults
-                                  }
-                                </p>
-                              </div>
+                        <div
+                          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                            expandedGoals[goal.id]
+                              ? 'max-h-[2000px]'
+                              : 'max-h-0'
+                          }`}
+                        >
+                          <div className="mb-2">
+                            <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-sky-400 transition-all duration-300"
+                                style={{
+                                  width: `${calculateProgress(goal)}%`,
+                                }}
+                              />
                             </div>
                           </div>
-                        )}
+                          <div className="flex justify-end">
+                            <button
+                              onClick={() => toggleGoalCompletion(goal.id)}
+                              className="px-2 py-1 text-sm rounded-md bg-emerald-500/80 hover:bg-emerald-600/80 text-white transition-all duration-200"
+                            >
+                              Върни в активни
+                            </button>
+                            <button
+                              onClick={() => deleteGoal(goal.id)}
+                              className="ml-2 px-2 py-1 text-sm rounded-md bg-red-500/80 hover:bg-red-600/80 text-white transition-all duration-200"
+                            >
+                              Изтрий
+                            </button>
+                          </div>
+
+                          {goal.aiAnalysis && (
+                            <div
+                              className={`mt-4 p-4 rounded-lg ${
+                                isDarkMode
+                                  ? 'bg-slate-700/50'
+                                  : 'bg-slate-50/50'
+                              }`}
+                            >
+                              <h4 className="font-semibold mb-4">
+                                AI План за спестяване
+                              </h4>
+                              <div className="space-y-4">
+                                <div>
+                                  <h5 className="font-medium mb-2">
+                                    Основен план
+                                  </h5>
+                                  <p className="text-sm mb-2">
+                                    Месечна цел:{' '}
+                                    <span className="text-emerald-400 font-semibold">
+                                      {goal.aiAnalysis.mainPlan.monthlyTarget.toFixed(
+                                        2,
+                                      )}{' '}
+                                      лв.
+                                    </span>
+                                  </p>
+                                  <p className="text-sm mb-2">
+                                    {goal.aiAnalysis.mainPlan.timeline}
+                                  </p>
+                                  <ul className="space-y-1 text-sm">
+                                    {goal.aiAnalysis.mainPlan.steps.map(
+                                      (step, index) => (
+                                        <li
+                                          key={index}
+                                          className="flex items-start gap-2"
+                                        >
+                                          <span className="text-emerald-400">
+                                            •
+                                          </span>
+                                          <span>{step}</span>
+                                        </li>
+                                      ),
+                                    )}
+                                  </ul>
+                                </div>
+
+                                <div>
+                                  <h5 className="font-medium mb-2">
+                                    Междинни цели
+                                  </h5>
+                                  <div className="space-y-2">
+                                    {goal.milestones.map((milestone, index) => (
+                                      <div
+                                        key={index}
+                                        className="flex items-center gap-2"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={milestone.isCompleted}
+                                          onChange={() =>
+                                            updateMilestoneProgress(
+                                              goal.id,
+                                              index,
+                                            )
+                                          }
+                                          className="rounded text-emerald-400"
+                                        />
+                                        <span className="text-sm">
+                                          {milestone.description}:{' '}
+                                          {milestone.targetAmount.toFixed(2)}{' '}
+                                          лв. до{' '}
+                                          {new Date(
+                                            milestone.date,
+                                          ).toLocaleDateString('bg-BG')}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <h5 className="font-medium mb-2">
+                                    Алтернативни методи
+                                  </h5>
+                                  <ul className="space-y-1 text-sm">
+                                    {goal.aiAnalysis.alternativeMethods.suggestions.map(
+                                      (suggestion, index) => (
+                                        <li
+                                          key={index}
+                                          className="flex items-start gap-2"
+                                        >
+                                          <span className="text-emerald-400">
+                                            •
+                                          </span>
+                                          <span>{suggestion}</span>
+                                        </li>
+                                      ),
+                                    )}
+                                  </ul>
+                                  <p className="mt-2 text-sm text-emerald-400">
+                                    {
+                                      goal.aiAnalysis.alternativeMethods
+                                        .expectedResults
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                 </div>
