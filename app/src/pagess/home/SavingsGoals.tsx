@@ -139,6 +139,43 @@ const SavingsGoals: React.FC = () => {
         monthlyIncome,
       });
 
+      const token =
+        localStorage.getItem('authToken') ||
+        sessionStorage.getItem('authToken');
+      if (!token) {
+        setError('Липсва токен за удостоверяване. Моля, влезте отново.');
+        return;
+      }
+
+      const response = await fetch(
+        `${(import.meta as any).env.VITE_API_BASE_URL}/savings-goals`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: newGoal.name,
+            targetAmount,
+            currentAmount: 0,
+            deadline: newGoal.deadline,
+            description: newGoal.description,
+            monthlyIncome: newGoal.monthlyIncome,
+            milestones,
+            aiAnalysis: analysis,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('API Error:', data);
+        setError(data.error || 'Грешка при запазване на целта');
+        return;
+      }
+
       const goalToAdd = {
         id: Date.now(),
         ...newGoal,
