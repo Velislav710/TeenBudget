@@ -13,7 +13,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 require("dotenv").config();
 
-const whitelist = ["http://localhost:5173", "https://teenbudget.noit.eu"];
+const whitelist = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://teenbudget.noit.eu"
+];
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || whitelist.includes(origin)) {
@@ -210,7 +214,7 @@ app.post("/password-reset-request", (req, res) => {
 
     const encodedToken = Buffer.from(token).toString("base64");
 
-    const resetLink = `http://localhost:5173/resetpassword/resetbasic/${encodedToken}`;
+    const resetLink = `https://teenbudget.noit.eu/resetpassword/resetbasic/${encodedToken}`;
 
     const mailOptions = {
       from: EMAIL_USER,
@@ -631,6 +635,99 @@ app.get("/get-last-expense-analysis", (req, res) => {
   }
 });
 
+// Ендпойнт за създаване на цел за спестяване
+app.post("/savings-goals", (req, res) => {
+  const {
+    name,
+    targetAmount,
+    currentAmount,
+    deadline,
+    description,
+    monthlyIncome,
+    milestones,
+    aiAnalysis
+  } = req.body;
+  const token = req.headers.authorization?.split(" ")[1];
+
+  console.log("Received request to create savings goal:", {
+    name,
+    targetAmount,
+    deadline
+  });
+
+  if (!token) {
+    console.log("No token provided");
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = base64Url.length % 4;
+  if (padding) {
+    base64Url += "=".repeat(4 - padding);
+  }
+
+  const decodedToken = atob(base64Url);
+
+  jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+    if (err) {
+      console.log("Token verification failed:", err);
+      return res.status(401).json({ error: "Невалиден токен" });
+    }
+    const userId = decoded.id;
+    console.log("Token verified, user ID:", userId);
+
+    // Преобразуване на обектите в JSON стрингове за съхранение в базата данни
+    const milestonesJson = JSON.stringify(milestones);
+    const aiAnalysisJson = JSON.stringify(aiAnalysis);
+    const created_at = new Date();
+    const updated_at = new Date();
+
+    console.log("Attempting to save to database with data:", {
+      userId,
+      name,
+      targetAmount,
+      currentAmount,
+      deadline
+    });
+
+    db.createSavingsGoal(
+      userId,
+      name,
+      targetAmount,
+      currentAmount || 0,
+      deadline,
+      description,
+      monthlyIncome,
+      milestonesJson,
+      aiAnalysisJson,
+      created_at,
+      updated_at,
+      (err, result) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Грешка в базата данни" });
+        }
+
+        console.log("Successfully saved savings goal:", result);
+        res.json({
+          message: "Целта за спестяване е добавена успешно",
+          goal: {
+            id: result.insertId,
+            name,
+            targetAmount,
+            currentAmount: currentAmount || 0,
+            deadline,
+            description,
+            monthlyIncome,
+            milestones,
+            aiAnalysis
+          }
+        });
+      }
+    );
+  });
+});
+
 app.listen(5000, () => {
-  console.log("Сървърът е стартиран на http://localhost:5000");
+  console.log("Сървърът е стартиран на port 5000");
 });

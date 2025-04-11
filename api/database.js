@@ -258,6 +258,62 @@ const getLastAIanalysis = (userId, callback) => {
   });
 };
 
+// Функции за работа с цели за спестяване
+const createSavingsGoal = (
+  userId,
+  name,
+  target_amount,
+  current_amount,
+  deadline,
+  description,
+  monthly_income,
+  milestones,
+  ai_analysis,
+  created_at,
+  updated_at,
+  callback
+) => {
+  console.log("Creating savings goal in database with params:", {
+    userId,
+    name,
+    target_amount,
+    current_amount,
+    deadline
+  });
+
+  const query =
+    "INSERT INTO savings_goals (user_id, name, target_amount, current_amount, deadline, description, monthly_income, milestones, ai_analysis, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+  db.query(
+    query,
+    [
+      userId,
+      name,
+      target_amount,
+      current_amount,
+      deadline,
+      description,
+      monthly_income,
+      milestones,
+      ai_analysis,
+      created_at,
+      updated_at
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("Error in createSavingsGoal:", err);
+        if (err.code === "ER_NO_SUCH_TABLE") {
+          console.log("Table does not exist, attempting to create it...");
+          createTables();
+        }
+        return callback(err);
+      }
+      console.log("Successfully created savings goal:", result);
+      callback(null, result);
+    }
+  );
+};
+
 module.exports = {
   checkEmailExists,
   createUser,
@@ -270,5 +326,6 @@ module.exports = {
   insertDashboardAnalysis,
   insertFinancialAnalysis,
   createAIanalysis,
-  getLastAIanalysis
+  getLastAIanalysis,
+  createSavingsGoal
 };

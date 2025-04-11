@@ -22,6 +22,7 @@ const BudgetPlanning = () => {
   const [expectedIncome, setExpectedIncome] = useState<string>('');
   const [confirmedIncome, setConfirmedIncome] = useState<number>(0);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [categories, setCategories] = useState<BudgetCategory[]>([
     {
@@ -133,6 +134,7 @@ const BudgetPlanning = () => {
     const income = Number(expectedIncome);
     if (income > 0) {
       setConfirmedIncome(income);
+      setIsLoading(true);
 
       try {
         const aiResult = await fetchFinancialAnalysisAI({
@@ -160,6 +162,8 @@ const BudgetPlanning = () => {
         }
       } catch (error) {
         console.error('Error in handleConfirmIncome:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -264,13 +268,23 @@ const BudgetPlanning = () => {
               </div>
               <button
                 onClick={handleConfirmIncome}
+                disabled={isLoading}
                 className={`px-6 py-3 rounded-lg ${
                   isDarkMode
                     ? 'bg-sky-500 hover:bg-sky-600'
                     : 'bg-sky-400 hover:bg-sky-500'
-                } text-white transition-all duration-200`}
+                } text-white transition-all duration-200 flex items-center gap-2 ${
+                  isLoading ? 'opacity-75 cursor-not-allowed' : ''
+                }`}
               >
-                Потвърди и получи AI препоръки
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Генериране...</span>
+                  </>
+                ) : (
+                  'Потвърди и получи AI препоръки'
+                )}
               </button>
             </div>
           </div>

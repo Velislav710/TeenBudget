@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import Footer from '../../components/Footerr/Footer';
 import { useTheme } from '../../context/ThemeContext';
 import ThemeToggle from '../../components/ThemeToggle';
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const SignUpPage = () => {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ const SignUpPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [errors, setErrors] = useState({
     name: false,
     email: false,
@@ -25,6 +28,7 @@ const SignUpPage = () => {
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrorMessage('');
 
     const newErrors = {
       name: !name,
@@ -36,6 +40,7 @@ const SignUpPage = () => {
     setErrors(newErrors);
 
     if (!Object.values(newErrors).includes(true)) {
+      setIsLoading(true);
       try {
         const nameParts = name.trim().split(' ');
         const firstName = nameParts[0];
@@ -73,7 +78,9 @@ const SignUpPage = () => {
           throw new Error(data.error || 'Грешка при регистрация');
         }
       } catch (error: any) {
-        alert(error.message || 'Възникна неочаквана грешка');
+        setErrorMessage(error.message || 'Възникна неочаквана грешка');
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -106,89 +113,118 @@ const SignUpPage = () => {
           if (result.valid) {
             navigate(`/main`);
           } else {
-            console.log('Invalid token');
             localStorage.removeItem('authToken');
             sessionStorage.removeItem('authToken');
-            navigate('/signup');
           }
         } catch (error) {
           console.error('Error validating token:', error);
-          navigate('/signup');
+          localStorage.removeItem('authToken');
+          sessionStorage.removeItem('authToken');
         }
-      } else {
-        navigate('/signup');
       }
     };
 
     checkTokenValidity();
   }, [navigate]);
 
-  const inputClasses = (error: boolean) => `
-    w-full px-4 py-3 rounded-xl text-lg transition-all duration-300
-    ${
-      isDarkMode
-        ? error
-          ? 'bg-red-900/20 border-2 border-red-500 text-white placeholder-red-400'
-          : 'bg-gray-700/50 border-2 border-gray-600 text-white placeholder-gray-400 focus:border-emerald-500'
-        : error
-        ? 'bg-red-50 border-2 border-red-500 text-red-900 placeholder-red-400'
-        : 'bg-white border-2 border-amber-300 text-amber-900 placeholder-amber-400 focus:border-emerald-500'
-    }
-  `;
-
   return (
-    <div className={isDarkMode ? 'dark' : ''}>
-      <div
-        className={`min-h-screen ${
-          isDarkMode
-            ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900'
-            : 'bg-gradient-to-r from-blue-400 to-blue-300'
-        } flex flex-col`}
-      >
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
-
-        <div className="flex-grow flex items-center justify-center p-6">
-          <form
-            onSubmit={handleSignUp}
-            className={`w-full max-w-md ${
-              isDarkMode ? 'bg-gray-800/90' : 'bg-white/90'
-            } rounded-2xl shadow-2xl p-10 backdrop-blur-sm`}
-          >
-            <div className="mb-10 text-center">
+    <div
+      className={`min-h-screen ${
+        isDarkMode
+          ? 'bg-gradient-to-br from-slate-900 via-gray-800 to-slate-900'
+          : 'bg-gradient-to-br from-rose-50 via-sky-50 to-teal-50'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <header
+          className={`fixed top-0 right-0 left-0 z-10 ${
+            isDarkMode ? 'bg-slate-800/95' : 'bg-white/95'
+          } backdrop-blur-sm shadow-sm px-8 py-4`}
+        >
+          <div className="max-w-7xl mx-auto flex justify-between items-center">
+            <div className="flex items-center gap-4">
               <h1
-                className={`text-4xl font-bold ${
-                  isDarkMode ? 'text-white' : 'text-blue-950'
+                className={`text-2xl font-bold ${
+                  isDarkMode ? 'text-white' : 'text-slate-800'
                 }`}
               >
-                Създайте акаунт
+                <Link to="/">Тийн Бюджет</Link>
               </h1>
-              <p
-                className={`mt-3 text-lg ${
-                  isDarkMode ? 'text-gray-300' : 'text-blue-900'
-                }`}
-              >
-                Въведете вашите данни, за да се регистрирате
-              </p>
+              <ThemeToggle />
             </div>
+            <div className="flex items-center gap-4">
+              <Link
+                to="/login"
+                className={`px-6 py-2 rounded-md ${
+                  isDarkMode
+                    ? 'bg-sky-500/90 hover:bg-sky-600/90'
+                    : 'bg-sky-400/90 hover:bg-sky-500/90'
+                } text-white transition-all duration-200`}
+              >
+                Вход
+              </Link>
+            </div>
+          </div>
+        </header>
 
-            <div className="space-y-6">
+        <main className="pt-24 flex justify-center items-center min-h-[calc(100vh-180px)]">
+          <div
+            className={`w-full max-w-md p-8 rounded-2xl ${
+              isDarkMode ? 'bg-slate-800/50' : 'bg-white/50'
+            } backdrop-blur-sm shadow-lg`}
+          >
+            <h2
+              className={`text-3xl font-bold mb-6 text-center ${
+                isDarkMode ? 'text-white' : 'text-slate-800'
+              }`}
+            >
+              Създайте акаунт
+            </h2>
+            <p
+              className={`text-center mb-8 ${
+                isDarkMode ? 'text-slate-300' : 'text-slate-600'
+              }`}
+            >
+              Въведете вашите данни, за да се регистрирате
+            </p>
+
+            {errorMessage && (
+              <div className="mb-6 p-3 bg-red-100 text-red-700 rounded-md text-center">
+                {errorMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleSignUp} className="space-y-6">
               <div>
                 <label
-                  className={`text-base font-semibold block mb-2 ${
-                    isDarkMode ? 'text-gray-200' : 'text-amber-900'
+                  className={`block mb-2 font-medium ${
+                    isDarkMode ? 'text-slate-200' : 'text-slate-700'
                   }`}
                 >
                   Име и фамилия
                 </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className={inputClasses(errors.name)}
-                  placeholder="Въведете вашето име"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <FaUser
+                      className={
+                        isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                      }
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={`w-full pl-10 pr-4 py-3 rounded-xl text-lg transition-all duration-300 ${
+                      errors.name
+                        ? 'border-red-500 bg-red-50/10 focus:ring-red-500'
+                        : isDarkMode
+                        ? 'bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:border-sky-500 focus:ring-sky-500'
+                        : 'bg-white/70 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:ring-sky-500'
+                    } border-2 focus:ring-2 focus:outline-none`}
+                    placeholder="Въведете вашето име"
+                  />
+                </div>
                 {errors.name && (
                   <p className="mt-2 text-sm font-medium text-red-500">
                     Моля, въведете вашето име
@@ -198,19 +234,34 @@ const SignUpPage = () => {
 
               <div>
                 <label
-                  className={`text-base font-semibold block mb-2 ${
-                    isDarkMode ? 'text-gray-200' : 'text-amber-900'
+                  className={`block mb-2 font-medium ${
+                    isDarkMode ? 'text-slate-200' : 'text-slate-700'
                   }`}
                 >
                   Имейл
                 </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={inputClasses(errors.email)}
-                  placeholder="Въведете вашия имейл"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <FaEnvelope
+                      className={
+                        isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                      }
+                    />
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={`w-full pl-10 pr-4 py-3 rounded-xl text-lg transition-all duration-300 ${
+                      errors.email
+                        ? 'border-red-500 bg-red-50/10 focus:ring-red-500'
+                        : isDarkMode
+                        ? 'bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:border-sky-500 focus:ring-sky-500'
+                        : 'bg-white/70 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:ring-sky-500'
+                    } border-2 focus:ring-2 focus:outline-none`}
+                    placeholder="Въведете вашия имейл"
+                  />
+                </div>
                 {errors.email && (
                   <p className="mt-2 text-sm font-medium text-red-500">
                     Моля, въведете валиден имейл
@@ -220,63 +271,50 @@ const SignUpPage = () => {
 
               <div>
                 <label
-                  className={`text-base font-semibold block mb-2 ${
-                    isDarkMode ? 'text-gray-200' : 'text-blue-900'
+                  className={`block mb-2 font-medium ${
+                    isDarkMode ? 'text-slate-200' : 'text-slate-700'
                   }`}
                 >
                   Парола
                 </label>
                 <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <FaLock
+                      className={
+                        isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                      }
+                    />
+                  </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className={inputClasses(errors.password)}
+                    className={`w-full pl-10 pr-12 py-3 rounded-xl text-lg transition-all duration-300 ${
+                      errors.password
+                        ? 'border-red-500 bg-red-50/10 focus:ring-red-500'
+                        : isDarkMode
+                        ? 'bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:border-sky-500 focus:ring-sky-500'
+                        : 'bg-white/70 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:ring-sky-500'
+                    } border-2 focus:ring-2 focus:outline-none`}
                     placeholder="Въведете вашата парола"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${
-                      isDarkMode
-                        ? 'text-gray-400 hover:text-gray-300'
-                        : 'text-blue-700 hover:text-blue-800'
-                    }`}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3"
                   >
                     {showPassword ? (
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                      </svg>
+                      <FaEyeSlash
+                        className={`w-5 h-5 ${
+                          isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                        } hover:text-sky-500 transition-colors`}
+                      />
                     ) : (
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                        />
-                      </svg>
+                      <FaEye
+                        className={`w-5 h-5 ${
+                          isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                        } hover:text-sky-500 transition-colors`}
+                      />
                     )}
                   </button>
                 </div>
@@ -290,63 +328,50 @@ const SignUpPage = () => {
 
               <div>
                 <label
-                  className={`text-base font-semibold block mb-2 ${
-                    isDarkMode ? 'text-gray-200' : 'text-blue-900'
+                  className={`block mb-2 font-medium ${
+                    isDarkMode ? 'text-slate-200' : 'text-slate-700'
                   }`}
                 >
                   Потвърдете паролата
                 </label>
                 <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <FaLock
+                      className={
+                        isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                      }
+                    />
+                  </div>
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className={inputClasses(errors.confirmPassword)}
+                    className={`w-full pl-10 pr-12 py-3 rounded-xl text-lg transition-all duration-300 ${
+                      errors.confirmPassword
+                        ? 'border-red-500 bg-red-50/10 focus:ring-red-500'
+                        : isDarkMode
+                        ? 'bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:border-sky-500 focus:ring-sky-500'
+                        : 'bg-white/70 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:ring-sky-500'
+                    } border-2 focus:ring-2 focus:outline-none`}
                     placeholder="Потвърдете паролата"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${
-                      isDarkMode
-                        ? 'text-gray-400 hover:text-gray-300'
-                        : 'text-amber-700 hover:text-amber-800'
-                    }`}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3"
                   >
                     {showConfirmPassword ? (
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                      </svg>
+                      <FaEyeSlash
+                        className={`w-5 h-5 ${
+                          isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                        } hover:text-sky-500 transition-colors`}
+                      />
                     ) : (
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                        />
-                      </svg>
+                      <FaEye
+                        className={`w-5 h-5 ${
+                          isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                        } hover:text-sky-500 transition-colors`}
+                      />
                     )}
                   </button>
                 </div>
@@ -359,32 +384,42 @@ const SignUpPage = () => {
 
               <button
                 type="submit"
+                disabled={isLoading}
                 className={`w-full ${
                   isDarkMode
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-blue-500 hover:bg-blue-600'
-                } text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 text-lg shadow-xl`}
+                    ? 'bg-emerald-500/90 hover:bg-emerald-600/90'
+                    : 'bg-emerald-400/90 hover:bg-emerald-500/90'
+                } text-white font-bold py-4 rounded-xl transition-all transform hover:scale-105 text-lg shadow-xl ${
+                  isLoading ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               >
-                Регистрирай се
+                {isLoading ? 'Регистрация...' : 'Регистрирай се'}
               </button>
 
               <div className="text-center mt-6">
-                <Link
-                  to="/login"
-                  className={`font-bold text-lg ${
-                    isDarkMode
-                      ? 'text-blue-400 hover:text-blue-300'
-                      : 'text-blue-700 hover:text-blue-800'
+                <p
+                  className={`${
+                    isDarkMode ? 'text-slate-300' : 'text-slate-600'
                   }`}
                 >
-                  Вече имате акаунт? Влезте тук
-                </Link>
+                  Вече имате акаунт?{' '}
+                  <Link
+                    to="/login"
+                    className={`font-bold ${
+                      isDarkMode
+                        ? 'text-sky-400 hover:text-sky-300'
+                        : 'text-sky-600 hover:text-sky-700'
+                    }`}
+                  >
+                    Влезте тук
+                  </Link>
+                </p>
               </div>
-            </div>
-          </form>
-        </div>
-        <Footer />
+            </form>
+          </div>
+        </main>
       </div>
+      <Footer />
     </div>
   );
 };

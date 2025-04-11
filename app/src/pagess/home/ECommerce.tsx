@@ -488,7 +488,9 @@ const ECommerce = () => {
                         isDarkMode ? 'bg-slate-600/50' : 'bg-white/50'
                       }`}
                     >
-                      <h4 className="font-medium mb-2">Топ категория</h4>
+                      <h4 className="font-medium mb-2">
+                        Топ категория за разходи:{' '}
+                      </h4>
                       <div className="flex items-center gap-2">
                         <span className="material-icons text-sky-400">
                           <BiCategoryAlt />
@@ -748,29 +750,22 @@ const ECommerce = () => {
                       curve: 'smooth',
                       width: 3,
                     },
-                    colors: ['#34D399', '#FB7185'],
                     xaxis: {
                       categories: getChartData.categories,
-                      labels: {
-                        style: {
-                          colors: isDarkMode ? '#E2E8F0' : '#334155',
-                        },
-                      },
                     },
                     yaxis: {
                       labels: {
-                        style: {
-                          colors: isDarkMode ? '#E2E8F0' : '#334155',
-                        },
+                        formatter: (value: number) => `${value.toFixed(2)} лв.`,
                       },
                     },
-                    legend: {
-                      labels: {
-                        colors: isDarkMode ? '#E2E8F0' : '#334155',
+                    tooltip: {
+                      y: {
+                        formatter: (value: number) => `${value.toFixed(2)} лв.`,
                       },
                     },
                   }}
                   series={getChartData.series}
+                  type="line"
                   height={350}
                 />
               </div>
