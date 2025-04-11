@@ -16,7 +16,7 @@
   },
   "name": "api",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "dev": "node server",
     "test": "npx jest"
