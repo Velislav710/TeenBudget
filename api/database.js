@@ -1,43 +1,56 @@
+// Импортиране на MySQL библиотеката
 const mysql = require("mysql2");
+
+// Импортиране на настройките за базата данни (отдалечени и локални)
 const dbOpts = require("./config.js").dbOpts;
 const dbOptsLocal = require("./config.js").dbOptsLocal;
 
+// Създаване на връзка с локалната база данни
 const db = mysql.createConnection(dbOptsLocal);
 
+// Свързване с базата данни
 db.connect((err) => {
   if (err) throw err;
-  console.log("MySQL Connected...");
+  console.log("MySQL Свързан...");
 });
 
-// Функции за потребители
+// === ФУНКЦИИ ЗА ПОТРЕБИТЕЛИ ===
+
+// Проверка дали даден имейл вече съществува в базата
 const checkEmailExists = (email, callback) => {
   const query = "SELECT * FROM users WHERE email = ?";
   db.query(query, [email], callback);
 };
 
+// Създаване на нов потребител
 const createUser = (firstName, lastName, email, hashedPassword, callback) => {
   const query =
     "INSERT INTO users (first_name, last_name, email, password) VALUES (?, ?, ?, ?)";
   db.query(query, [firstName, lastName, email, hashedPassword], callback);
 };
 
+// Намиране на потребител по имейл
 const findUserByEmail = (email, callback) => {
   const query = "SELECT * FROM users WHERE email = ?";
   db.query(query, [email], callback);
 };
 
+// Актуализиране на паролата на потребител по ID
 const updateUserPassword = (userId, hashedPassword, callback) => {
   const query = "UPDATE users SET password = ? WHERE id = ?";
   db.query(query, [hashedPassword, userId], callback);
 };
 
+// Вземане на потребител по ID
 const getUserById = (userId, callback) => {
   const query =
     "SELECT id, first_name, last_name, email FROM users WHERE id = ?";
   db.query(query, [userId], callback);
 };
 
-// Функции за транзакции
+// === ФУНКЦИИ ЗА ТРАНЗАКЦИИ ===
+
+// Създаване на нова транзакция
 const createTransaction = (
   userId,
   type,
@@ -56,17 +69,20 @@ const createTransaction = (
   );
 };
 
+// Вземане на всички транзакции на потребител, подредени по дата
 const getTransactionsByUserId = (userId, callback) => {
   const query =
     "SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC";
   db.query(query, [userId], callback);
 };
 
+// Изтриване на всички транзакции на потребител
 const deleteTransactionsByUserId = (userId, callback) => {
   const query = "DELETE FROM transactions WHERE user_id = ?";
   db.query(query, [userId], callback);
 };
 
+// Записване на анализ за таблото (dashboard)
 const insertDashboardAnalysis = (userId, data, callback) => {
   const query = `
     INSERT INTO dashboard_analysis 
@@ -77,7 +93,7 @@ const insertDashboardAnalysis = (userId, data, callback) => {
   const values = [
     userId,
     data.summary,
-    JSON.stringify(data.recommendations), // Store as JSON string
+    JSON.stringify(data.recommendations), // Запис като JSON низ
     data.savingsPotential,
     data.monthlyTrend,
     data.topCategory
@@ -86,6 +102,7 @@ const insertDashboardAnalysis = (userId, data, callback) => {
   db.query(query, values, callback);
 };
 
+// Записване на финансов анализ
 const insertFinancialAnalysis = (
   userId,
   food,
@@ -111,12 +128,13 @@ const insertFinancialAnalysis = (
       education,
       clothes,
       others,
-      JSON.stringify(recommendations) // Convert recommendations to a JSON string
+      JSON.stringify(recommendations) // Преобразуване на препоръките в JSON низ
     ],
     callback
   );
 };
 
+// Създаване на AI-базиран анализ
 const createAIanalysis = (
   userId,
   total_income,
@@ -179,19 +197,20 @@ const createAIanalysis = (
     date
   ];
 
-  console.log("Executing Query: ", query);
-  console.log("With Values: ", values);
+  console.log("Изпълнение на заявка: ", query);
+  console.log("С параметри: ", values);
 
   db.query(query, values, (error, results) => {
     if (error) {
-      console.error("Database Error:", error);
+      console.error("Грешка при запис в базата:", error);
       return callback(error, null);
     }
-    console.log("Insert Successful:", results);
+    console.log("Успешно записано:", results);
     callback(null, results);
   });
 };
 
+// Вземане на последния AI-анализ
 const getLastAIanalysis = (userId, callback) => {
   const query = `
     SELECT main_findings, 
@@ -207,7 +226,7 @@ const getLastAIanalysis = (userId, callback) => {
 
   db.query(query, [userId], (err, results) => {
     if (err) {
-      console.error("DB Query Error:", err);
+      console.error("Грешка при заявка към базата:", err);
       return callback(err, null);
     }
 
@@ -216,6 +235,7 @@ const getLastAIanalysis = (userId, callback) => {
     const analysis = results[0];
 
     try {
+      // Форматиране на JSON полетата
       const formattedAnalysis = {
         analysis: {
           overallSummary: {
@@ -252,13 +272,15 @@ const getLastAIanalysis = (userId, callback) => {
 
       callback(null, formattedAnalysis);
     } catch (parseError) {
-      console.error("Error parsing JSON from DB:", parseError);
+      console.error("Грешка при парсване на JSON:", parseError);
       callback(parseError, null);
     }
   });
 };
 
-// Функции за работа с цели за спестяване
+// === ФУНКЦИИ ЗА ЦЕЛИ ЗА СПЕСТЯВАНЕ ===
+
+// Създаване на нова цел за спестяване
 const createSavingsGoal = (
   userId,
   name,
@@ -273,7 +295,7 @@ const createSavingsGoal = (
   updated_at,
   callback
 ) => {
-  console.log("Creating savings goal in database with params:", {
+  console.log("Създаване на цел за спестяване с параметри:", {
     userId,
     name,
     target_amount,
@@ -301,19 +323,20 @@ const createSavingsGoal = (
     ],
     (err, result) => {
       if (err) {
-        console.error("Error in createSavingsGoal:", err);
+        console.error("Грешка при createSavingsGoal:", err);
         if (err.code === "ER_NO_SUCH_TABLE") {
-          console.log("Table does not exist, attempting to create it...");
-          createTables();
+          console.log("Таблицата не съществува, ще опитаме да я създадем...");
+          createTables(); // Вика се функция за създаване на таблицата, ако не съществува
         }
         return callback(err);
       }
-      console.log("Successfully created savings goal:", result);
+      console.log("Целта за спестяване е създадена успешно:", result);
       callback(null, result);
     }
   );
 };
 
+// === ЕКСПОРТ НА ВСИЧКИ ФУНКЦИИ ===
 module.exports = {
   checkEmailExists,
   createUser,
