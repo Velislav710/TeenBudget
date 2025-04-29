@@ -1,21 +1,21 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
-import WelcomePage from './pagess/landing/WelcomePage.tsx';
-import LoginPage from './pagess/authentication/LoginPage';
-import SignUpPage from './pagess/authentication/SignUpPage';
-import ECommerce from './pagess/home/ECommerce';
+import WelcomePage from './pages/landing/WelcomePage.tsx';
+import LoginPage from './pages/authentication/LoginPage';
+import SignUpPage from './pages/authentication/SignUpPage';
+import ECommerce from './pages/home/ECommerce';
 import ProtectedRoute from './layout/ProtectedRoute';
-import VerifyPage from './pagess/authentication/VerifyPage';
-import ForgotPassword from './pagess/authentication/ForgotPassword';
-import Resetbasic from './pagess/authentication/Resetbasic';
-import Contact from './pagess/contact/Contact';
-import BudgetPlanning from './pagess/home/BudgetPlanning';
-import SavingsGoals from './pagess/home/SavingsGoals';
-import ExpenseAnalytics from './pagess/home/expenseanalytics/ExpenseAnalytics';
-import FinancialEducation from './pagess/home/FinancialEducation';
-import Reports from './pagess/home/Reports';
-import Settings from './pagess/home/Settings';
+import VerifyPage from './pages/authentication/VerifyPage';
+import ForgotPassword from './pages/authentication/ForgotPassword';
+import Resetbasic from './pages/authentication/Resetbasic';
+import Contact from './pages/contact/Contact';
+import BudgetPlanning from './pages/home/BudgetPlanning';
+import SavingsGoals from './pages/home/SavingsGoals';
+import ExpenseAnalytics from './pages/home/expenseanalytics/ExpenseAnalytics';
+import FinancialEducation from './pages/home/FinancialEducation';
+import Reports from './pages/home/Reports';
+import Settings from './pages/home/Settings';
 
 const App = () => {
   return (

@@ -1,13 +1,13 @@
 const express = require("express");
-const mysql = require("mysql2");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 const bodyParser = require("body-parser");
 const crypto = require("crypto");
+const PDFDocument = require("pdfkit");
+const ExcelJS = require("exceljs");
 const db = require("./database");
-
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -726,6 +726,237 @@ app.post("/savings-goals", (req, res) => {
       }
     );
   });
+});
+
+// PDF Report Generation Endpoint
+app.post("/reports/pdf", (req, res) => {
+  // Get and validate token
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  try {
+    // Decode token
+    let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = base64Url.length % 4;
+    if (padding) {
+      base64Url += "=".repeat(4 - padding);
+    }
+    const decodedToken = atob(base64Url);
+
+    // Verify token
+    jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+      if (err) return res.status(401).json({ error: "Невалиден токен" });
+
+      const userId = decoded.id;
+      const { start, end } = req.body;
+
+      // Get transactions for the date range
+      db.getTransactionsByUserIdAndDateRange(
+        userId,
+        start,
+        end,
+        (err, transactions) => {
+          if (err)
+            return res.status(500).json({ error: "Грешка в базата данни" });
+
+          // Generate PDF with proper font for Cyrillic characters
+          const doc = new PDFDocument({
+            font: "../app/src/fonts/times.ttf", // Default font
+            size: "A4",
+            info: {
+              Title: "Финансов отчет",
+              Author: "Teen Budget App"
+            }
+          });
+
+          // Set response headers for PDF download
+          res.setHeader("Content-Type", "application/pdf");
+          res.setHeader(
+            "Content-Disposition",
+            "attachment; filename=financial-report.pdf"
+          );
+
+          // Pipe the PDF directly to the response
+          doc.pipe(res);
+
+          // Register a standard font that supports Cyrillic
+          // Note: For full Cyrillic support, you might need to embed a font that supports it
+
+          // Add content to PDF
+          doc.fontSize(20).text("Финансов отчет", { align: "center" });
+          doc.moveDown();
+
+          const startDate = new Date(start).toLocaleDateString("bg-BG");
+          const endDate = new Date(end).toLocaleDateString("bg-BG");
+          doc.fontSize(12).text(`Период: ${startDate} - ${endDate}`);
+          doc.moveDown();
+
+          // Create table header
+          const tableTop = 150;
+          let currentTop = tableTop;
+
+          // Headers
+          doc.text("Дата", 50, currentTop);
+          doc.text("Описание", 150, currentTop);
+          doc.text("Категория", 300, currentTop);
+          doc.text("Сума", 450, currentTop);
+          currentTop += 20;
+
+          // Draw header underline
+          doc
+            .moveTo(50, currentTop - 5)
+            .lineTo(500, currentTop - 5)
+            .stroke();
+
+          // Table content
+          let totalAmount = 0;
+
+          transactions.forEach((transaction) => {
+            // Format date using Bulgarian locale
+            const date = new Date(transaction.date).toLocaleDateString("bg-BG");
+
+            // Ensure text fits in columns with proper encoding
+            const description = transaction.description.substring(0, 25);
+            const category = transaction.category.substring(0, 20);
+
+            doc.text(date, 50, currentTop);
+            doc.text(description, 150, currentTop);
+            doc.text(category, 300, currentTop);
+            doc.text(transaction.amount.toFixed(2) + " лв.", 450, currentTop);
+
+            currentTop += 20;
+
+            // Add amount to total (accounting for negative values if expenses)
+            if (transaction.type === "expense") {
+              totalAmount -= parseFloat(transaction.amount);
+            } else {
+              totalAmount += parseFloat(transaction.amount);
+            }
+
+            // Add new page if needed
+            if (currentTop > 700) {
+              doc.addPage();
+              currentTop = 50;
+            }
+          });
+
+          // Add total
+          doc.moveDown();
+          doc.text(`Обща сума: ${totalAmount.toFixed(2)} лв.`, {
+            align: "right"
+          });
+
+          // Finalize the PDF
+          doc.end();
+        }
+      );
+    });
+  } catch (error) {
+    return res.status(500).json({ error: "Грешка при обработка на заявката" });
+  }
+});
+
+// Excel Report Generation Endpoint
+app.post("/reports/excel", (req, res) => {
+  // Get and validate token
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Не е предоставен токен" });
+  }
+
+  try {
+    // Decode token
+    let base64Url = token.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = base64Url.length % 4;
+    if (padding) {
+      base64Url += "=".repeat(4 - padding);
+    }
+    const decodedToken = atob(base64Url);
+
+    // Verify token
+    jwt.verify(decodedToken, SECRET_KEY, (err, decoded) => {
+      if (err) return res.status(401).json({ error: "Невалиден токен" });
+
+      const userId = decoded.id;
+      const { start, end } = req.body;
+
+      // Get transactions for the date range
+      db.getTransactionsByUserIdAndDateRange(
+        userId,
+        start,
+        end,
+        (err, transactions) => {
+          if (err)
+            return res.status(500).json({ error: "Грешка в базата данни" });
+
+          // Create a new Excel workbook
+          const workbook = new ExcelJS.Workbook();
+          const worksheet = workbook.addWorksheet("Transactions");
+
+          // Add headers
+          worksheet.columns = [
+            { header: "Дата", key: "date", width: 15 },
+            { header: "Описание", key: "description", width: 30 },
+            { header: "Категория", key: "category", width: 20 },
+            { header: "Сума", key: "amount", width: 15 }
+          ];
+
+          // Style the header row
+          worksheet.getRow(1).font = { bold: true };
+
+          // Add data
+          transactions.forEach((transaction) => {
+            worksheet.addRow({
+              date: new Date(transaction.date).toLocaleDateString(),
+              description: transaction.description,
+              category: transaction.category,
+              amount: transaction.amount
+            });
+          });
+
+          // Calculate and add total
+          const totalRow = worksheet.rowCount + 2; // This is where the total will go
+          worksheet.getCell(`C${totalRow}`).value = "Обща сума:";
+          worksheet.getCell(`C${totalRow}`).font = { bold: true };
+
+          // Exclude the total row itself from the sum range
+          const sumRange = `D2:D${worksheet.rowCount - 2}`; // Sum range excluding the last row
+          worksheet.getCell(`D${totalRow}`).value = {
+            formula: `SUM(${sumRange})`,
+            date1904: false
+          };
+          worksheet.getCell(`D${totalRow}`).font = { bold: true };
+
+          // Set response headers
+          res.setHeader(
+            "Content-Type",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          );
+          res.setHeader(
+            "Content-Disposition",
+            "attachment; filename=financial-report.xlsx"
+          );
+
+          // Write to response
+          workbook.xlsx
+            .write(res)
+            .then(() => {
+              res.end();
+            })
+            .catch((err) => {
+              console.error("Excel generation error:", err);
+              res
+                .status(500)
+                .json({ error: "Грешка при генериране на Excel файл" });
+            });
+        }
+      );
+    });
+  } catch (error) {
+    return res.status(500).json({ error: "Грешка при обработка на заявката" });
+  }
 });
 
 app.listen(5000, () => {
