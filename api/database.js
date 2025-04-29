@@ -76,6 +76,17 @@ const getTransactionsByUserId = (userId, callback) => {
   db.query(query, [userId], callback);
 };
 
+const getTransactionsByUserIdAndDateRange = (
+  userId,
+  startDate,
+  endDate,
+  callback
+) => {
+  const query =
+    "SELECT * FROM transactions WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY date DESC";
+  db.query(query, [userId, startDate, endDate], callback);
+};
+
 // Изтриване на всички транзакции на потребител
 const deleteTransactionsByUserId = (userId, callback) => {
   const query = "DELETE FROM transactions WHERE user_id = ?";
@@ -345,6 +356,7 @@ module.exports = {
   getUserById,
   createTransaction,
   getTransactionsByUserId,
+  getTransactionsByUserIdAndDateRange,
   deleteTransactionsByUserId,
   insertDashboardAnalysis,
   insertFinancialAnalysis,
