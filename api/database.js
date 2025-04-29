@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 // Импортиране на MySQL библиотеката
 const mysql = require("mysql2");
 
@@ -17,37 +18,73 @@ db.connect((err) => {
 // === ФУНКЦИИ ЗА ПОТРЕБИТЕЛИ ===
 
 // Проверка дали даден имейл вече съществува в базата
+=======
+// database.js
+const mysql = require("mysql2");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+
+require("dotenv").config();
+
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "", // Default password for XAMPP
+  database: "teenbudget"
+});
+
+db.connect((err) => {
+  if (err) throw err;
+  console.log("MySQL Connected...");
+});
+
+// Helper functions
+>>>>>>> Stashed changes
 const checkEmailExists = (email, callback) => {
   const query = "SELECT * FROM users WHERE email = ?";
   db.query(query, [email], callback);
 };
 
+<<<<<<< Updated upstream
 // Създаване на нов потребител
+=======
+>>>>>>> Stashed changes
 const createUser = (firstName, lastName, email, hashedPassword, callback) => {
   const query =
     "INSERT INTO users (first_name, last_name, email, password) VALUES (?, ?, ?, ?)";
   db.query(query, [firstName, lastName, email, hashedPassword], callback);
 };
 
+<<<<<<< Updated upstream
 // Намиране на потребител по имейл
+=======
+>>>>>>> Stashed changes
 const findUserByEmail = (email, callback) => {
   const query = "SELECT * FROM users WHERE email = ?";
   db.query(query, [email], callback);
 };
 
+<<<<<<< Updated upstream
 // Актуализиране на паролата на потребител по ID
+=======
+>>>>>>> Stashed changes
 const updateUserPassword = (userId, hashedPassword, callback) => {
   const query = "UPDATE users SET password = ? WHERE id = ?";
   db.query(query, [hashedPassword, userId], callback);
 };
 
+<<<<<<< Updated upstream
 // Вземане на потребител по ID
+=======
+>>>>>>> Stashed changes
 const getUserById = (userId, callback) => {
   const query =
     "SELECT id, first_name, last_name, email FROM users WHERE id = ?";
   db.query(query, [userId], callback);
 };
 
+<<<<<<< Updated upstream
 // === ФУНКЦИИ ЗА ТРАНЗАКЦИИ ===
 
 // Създаване на нова транзакция
@@ -348,11 +385,14 @@ const createSavingsGoal = (
 };
 
 // === ЕКСПОРТ НА ВСИЧКИ ФУНКЦИИ ===
+=======
+>>>>>>> Stashed changes
 module.exports = {
   checkEmailExists,
   createUser,
   findUserByEmail,
   updateUserPassword,
+<<<<<<< Updated upstream
   getUserById,
   createTransaction,
   getTransactionsByUserId,
@@ -363,4 +403,7 @@ module.exports = {
   createAIanalysis,
   getLastAIanalysis,
   createSavingsGoal
+=======
+  getUserById
+>>>>>>> Stashed changes
 };
