@@ -39,6 +39,7 @@ const Reports = () => {
     start: '',
     end: '',
   });
+  const [dateError, setDateError] = useState('');
 
   // Set default date range on component mount (1 year period)
   useEffect(() => {
@@ -54,13 +55,39 @@ const Reports = () => {
 
   // Validate form whenever date range changes
   useEffect(() => {
-    setIsFormValid(!!dateRange.start && !!dateRange.end);
+    if (!dateRange.start || !dateRange.end) {
+      setIsFormValid(false);
+      setDateError('Моля, изберете начална и крайна дата за справката');
+      return;
+
+    // Check if end date is before start date
+    if (new Date(dateRange.end) < new Date(dateRange.start)) {
+      setIsFormValid(false);
+      setDateError('Крайната дата не може да бъде преди началната дата');
+      return;
+    }
+
+    setIsFormValid(true);
+    setDateError('');
   }, [dateRange]);
+
+  // Handle date change with validation
+  const handleDateChange = (field: 'start' | 'end', value: string) => {
+    const newDateRange = { ...dateRange, [field]: value };
+    setDateRange(newDateRange);
+  };
 
   // Check if form is valid before proceeding with API calls
   const validateAndProceed = (callback: () => Promise<void>) => {
     if (!dateRange.start || !dateRange.end) {
       setIsFormValid(false);
+      setDateError('Моля, изберете начална и крайна дата за справката');
+      return;
+    }
+
+    if (new Date(dateRange.end) < new Date(dateRange.start)) {
+      setIsFormValid(false);
+      setDateError('Крайната дата не може да бъде преди началната дата');
       return;
     }
 
@@ -206,7 +233,7 @@ const Reports = () => {
               Генериране на справка
             </h2>
 
-            {!isFormValid && (
+            {!isFormValid && dateError && (
               <div
                 className={`mb-4 p-3 rounded-lg flex items-center gap-2 ${
                   isDarkMode
@@ -215,7 +242,7 @@ const Reports = () => {
                 }`}
               >
                 <FaExclamationCircle />
-                <span>Моля, изберете начална и крайна дата за справката</span>
+                <span>{dateError}</span>
               </div>
             )}
 
@@ -238,16 +265,18 @@ const Reports = () => {
                       : ''
                   }`}
                   value={dateRange.start}
-                  onChange={(e) =>
-                    setDateRange((prev) => ({ ...prev, start: e.target.value }))
-                  }
+                  onChange={(e) => handleDateChange('start', e.target.value)}
                   required
                 />
               </div>
               <div>
                 <label
                   className={`block text-sm font-medium mb-2 ${
-                    !dateRange.end && !isFormValid ? 'text-red-500' : ''
+                    (!dateRange.end ||
+                      new Date(dateRange.end) < new Date(dateRange.start)) &&
+                    !isFormValid
+                      ? 'text-red-500'
+                      : ''
                   }`}
                 >
                   До дата *
@@ -257,14 +286,15 @@ const Reports = () => {
                   className={`w-full p-2 rounded-lg ${
                     isDarkMode ? 'bg-slate-700 text-white' : 'bg-white'
                   } ${
-                    !dateRange.end && !isFormValid
+                    (!dateRange.end ||
+                      new Date(dateRange.end) < new Date(dateRange.start)) &&
+                    !isFormValid
                       ? 'border-2 border-red-500'
                       : ''
                   }`}
                   value={dateRange.end}
-                  onChange={(e) =>
-                    setDateRange((prev) => ({ ...prev, end: e.target.value }))
-                  }
+                  onChange={(e) => handleDateChange('end', e.target.value)}
+                  min={dateRange.start} // This prevents selecting dates before the start date
                   required
                 />
               </div>
