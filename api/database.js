@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 // Импортиране на MySQL библиотеката
 const mysql = require("mysql2");
 
@@ -46,45 +45,32 @@ const checkEmailExists = (email, callback) => {
   db.query(query, [email], callback);
 };
 
-<<<<<<< Updated upstream
 // Създаване на нов потребител
-=======
->>>>>>> Stashed changes
 const createUser = (firstName, lastName, email, hashedPassword, callback) => {
   const query =
     "INSERT INTO users (first_name, last_name, email, password) VALUES (?, ?, ?, ?)";
   db.query(query, [firstName, lastName, email, hashedPassword], callback);
 };
 
-<<<<<<< Updated upstream
 // Намиране на потребител по имейл
-=======
->>>>>>> Stashed changes
 const findUserByEmail = (email, callback) => {
   const query = "SELECT * FROM users WHERE email = ?";
   db.query(query, [email], callback);
 };
 
-<<<<<<< Updated upstream
 // Актуализиране на паролата на потребител по ID
-=======
->>>>>>> Stashed changes
 const updateUserPassword = (userId, hashedPassword, callback) => {
   const query = "UPDATE users SET password = ? WHERE id = ?";
   db.query(query, [hashedPassword, userId], callback);
 };
 
-<<<<<<< Updated upstream
 // Вземане на потребител по ID
-=======
->>>>>>> Stashed changes
 const getUserById = (userId, callback) => {
   const query =
     "SELECT id, first_name, last_name, email FROM users WHERE id = ?";
   db.query(query, [userId], callback);
 };
 
-<<<<<<< Updated upstream
 // === ФУНКЦИИ ЗА ТРАНЗАКЦИИ ===
 
 // Създаване на нова транзакция
@@ -385,14 +371,11 @@ const createSavingsGoal = (
 };
 
 // === ЕКСПОРТ НА ВСИЧКИ ФУНКЦИИ ===
-=======
->>>>>>> Stashed changes
 module.exports = {
   checkEmailExists,
   createUser,
   findUserByEmail,
   updateUserPassword,
-<<<<<<< Updated upstream
   getUserById,
   createTransaction,
   getTransactionsByUserId,
@@ -403,7 +386,4 @@ module.exports = {
   createAIanalysis,
   getLastAIanalysis,
   createSavingsGoal
-=======
-  getUserById
->>>>>>> Stashed changes
 };

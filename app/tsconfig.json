@@ -2,10 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-<<<<<<< Updated upstream
     "types": ["vite/client"],
-=======
->>>>>>> Stashed changes
     "module": "ESNext",
     "skipLibCheck": true,
 
@@ -23,7 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-<<<<<<< Updated upstream
   "include": [
     "app/src",
     "app/src/lib.d.ts",
@@ -31,8 +27,5 @@
     "src/**/*.d.ts",
     "src/vite-env.d.ts"
   ],
-=======
-  "include": ["app/src", "app/src/lib.d.ts"],
->>>>>>> Stashed changes
   "references": [{ "path": "./tsconfig.node.json" }]
 }
