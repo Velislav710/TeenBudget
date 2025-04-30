@@ -17,29 +17,6 @@ db.connect((err) => {
 // === ФУНКЦИИ ЗА ПОТРЕБИТЕЛИ ===
 
 // Проверка дали даден имейл вече съществува в базата
-=======
-// database.js
-const mysql = require("mysql2");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-
-require("dotenv").config();
-
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "", // Default password for XAMPP
-  database: "teenbudget"
-});
-
-db.connect((err) => {
-  if (err) throw err;
-  console.log("MySQL Connected...");
-});
-
-// Helper functions
->>>>>>> Stashed changes
 const checkEmailExists = (email, callback) => {
   const query = "SELECT * FROM users WHERE email = ?";
   db.query(query, [email], callback);
