@@ -59,6 +59,7 @@ const Reports = () => {
       setIsFormValid(false);
       setDateError('Моля, изберете начална и крайна дата за справката');
       return;
+    }
 
     // Check if end date is before start date
     if (new Date(dateRange.end) < new Date(dateRange.start)) {
