@@ -40,16 +40,21 @@ const Reports = () => {
     end: '',
   });
   const [dateError, setDateError] = useState('');
+  const [maxDate, setMaxDate] = useState('');
 
-  // Set default date range on component mount (1 year period)
+  // Set default date range on component mount (1 year period) and set max date to today
   useEffect(() => {
     const today = new Date();
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(today.getFullYear() - 1);
 
+    // Format today as YYYY-MM-DD for the max attribute
+    const formattedToday = today.toISOString().split('T')[0];
+    setMaxDate(formattedToday);
+
     setDateRange({
       start: oneYearAgo.toISOString().split('T')[0],
-      end: today.toISOString().split('T')[0],
+      end: formattedToday,
     });
   }, []);
 
@@ -267,6 +272,7 @@ const Reports = () => {
                   }`}
                   value={dateRange.start}
                   onChange={(e) => handleDateChange('start', e.target.value)}
+                  max={maxDate} // Prevent selecting future dates
                   required
                 />
               </div>
@@ -296,6 +302,7 @@ const Reports = () => {
                   value={dateRange.end}
                   onChange={(e) => handleDateChange('end', e.target.value)}
                   min={dateRange.start} // This prevents selecting dates before the start date
+                  max={maxDate} // Prevent selecting future dates
                   required
                 />
               </div>
