@@ -10,7 +10,7 @@ import {
   FaHandsHelping,
   FaRegLightbulb,
 } from 'react-icons/fa';
-
+const FaviconIcon = '/favicon.png';
 const WelcomePage = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
@@ -104,6 +104,8 @@ const WelcomePage = () => {
         >
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             <div className="flex items-center gap-4">
+              {/* Добавяне на favicon като лого */}
+              <img src={FaviconIcon} alt="Logo" className="h-18 w-18" />
               <h1
                 className={`text-2xl font-bold ${
                   isDarkMode ? 'text-white' : 'text-slate-800'
