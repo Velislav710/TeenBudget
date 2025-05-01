@@ -14,7 +14,6 @@ import {
   FaExclamationCircle,
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-
 interface Transaction {
   id: number;
   date: string;
