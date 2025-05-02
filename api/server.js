@@ -186,7 +186,7 @@ app.post("/signin", (req, res) => {
         .json({ error: "Въведената парола е грешна или непълна!" });
 
     const token = jwt.sign({ id: user.id }, SECRET_KEY, {
-      expiresIn: rememberMe ? "7d" : "1h"
+      expiresIn: rememberMe ? "7d" : "7d"
     });
 
     const encodedToken = Buffer.from(token).toString("base64");
@@ -763,7 +763,7 @@ app.post("/reports/pdf", (req, res) => {
 
           // Generate PDF with proper font for Cyrillic characters
           const doc = new PDFDocument({
-            font: "../app/src/fonts/times.ttf", // Default font
+            font: "times.ttf", // Default font
             size: "A4",
             info: {
               Title: "Финансов отчет",
@@ -801,6 +801,7 @@ app.post("/reports/pdf", (req, res) => {
           doc.text("Дата", 50, currentTop);
           doc.text("Описание", 150, currentTop);
           doc.text("Категория", 300, currentTop);
+          doc.text("Тип", 380, currentTop);
           doc.text("Сума", 450, currentTop);
           currentTop += 20;
 
@@ -811,7 +812,8 @@ app.post("/reports/pdf", (req, res) => {
             .stroke();
 
           // Table content
-          let totalAmount = 0;
+          let totalIncome = 0;
+          let totalExpense = 0;
 
           transactions.forEach((transaction) => {
             // Format date using Bulgarian locale
@@ -820,19 +822,21 @@ app.post("/reports/pdf", (req, res) => {
             // Ensure text fits in columns with proper encoding
             const description = transaction.description.substring(0, 25);
             const category = transaction.category.substring(0, 20);
+            const type = transaction.type === "expense" ? "Разход" : "Приход";
 
             doc.text(date, 50, currentTop);
             doc.text(description, 150, currentTop);
             doc.text(category, 300, currentTop);
+            doc.text(type, 380, currentTop);
             doc.text(transaction.amount.toFixed(2) + " лв.", 450, currentTop);
 
             currentTop += 20;
 
-            // Add amount to total (accounting for negative values if expenses)
+            // Track totals by transaction type
             if (transaction.type === "expense") {
-              totalAmount -= parseFloat(transaction.amount);
+              totalExpense += parseFloat(transaction.amount);
             } else {
-              totalAmount += parseFloat(transaction.amount);
+              totalIncome += parseFloat(transaction.amount);
             }
 
             // Add new page if needed
@@ -842,11 +846,14 @@ app.post("/reports/pdf", (req, res) => {
             }
           });
 
-          // Add total
+          // Calculate balance
+          const balance = totalIncome - totalExpense;
+
+          // Add summary section
           doc.moveDown();
-          doc.text(`Обща сума: ${totalAmount.toFixed(2)} лв.`, {
-            align: "right"
-          });
+          doc.text(`Общи приходи: ${totalIncome.toFixed(2)} лв.`, 50);
+          doc.text(`Общи разходи: ${totalExpense.toFixed(2)} лв.`, 50);
+          doc.text(`Баланс: ${balance.toFixed(2)} лв.`, 50);
 
           // Finalize the PDF
           doc.end();
@@ -900,6 +907,7 @@ app.post("/reports/excel", (req, res) => {
             { header: "Дата", key: "date", width: 15 },
             { header: "Описание", key: "description", width: 30 },
             { header: "Категория", key: "category", width: 20 },
+            { header: "Тип", key: "type", width: 15 },
             { header: "Сума", key: "amount", width: 15 }
           ];
 
@@ -912,22 +920,44 @@ app.post("/reports/excel", (req, res) => {
               date: new Date(transaction.date).toLocaleDateString(),
               description: transaction.description,
               category: transaction.category,
+              type: transaction.type === "expense" ? "Разход" : "Приход",
               amount: transaction.amount
             });
           });
 
-          // Calculate and add total
-          const totalRow = worksheet.rowCount + 2; // This is where the total will go
-          worksheet.getCell(`C${totalRow}`).value = "Обща сума:";
-          worksheet.getCell(`C${totalRow}`).font = { bold: true };
+          // Calculate and add totals
+          const totalRow = worksheet.rowCount + 2; // This is where we'll start the summary
 
-          // Exclude the total row itself from the sum range
-          const sumRange = `D2:D${worksheet.rowCount - 2}`; // Sum range excluding the last row
-          worksheet.getCell(`D${totalRow}`).value = {
-            formula: `SUM(${sumRange})`,
+          // Add income calculation
+          worksheet.getCell(`B${totalRow}`).value = "Общи приходи:";
+          worksheet.getCell(`B${totalRow}`).font = { bold: true };
+          worksheet.getCell(`E${totalRow}`).value = {
+            formula: `SUMIF(D2:D${worksheet.rowCount - 2},"Приход",E2:E${
+              worksheet.rowCount - 2
+            })`,
             date1904: false
           };
-          worksheet.getCell(`D${totalRow}`).font = { bold: true };
+          worksheet.getCell(`E${totalRow}`).font = { bold: true };
+
+          // Add expense calculation
+          worksheet.getCell(`B${totalRow + 1}`).value = "Общи разходи:";
+          worksheet.getCell(`B${totalRow + 1}`).font = { bold: true };
+          worksheet.getCell(`E${totalRow + 1}`).value = {
+            formula: `SUMIF(D2:D${worksheet.rowCount - 2},"Разход",E2:E${
+              worksheet.rowCount - 2
+            })`,
+            date1904: false
+          };
+          worksheet.getCell(`E${totalRow + 1}`).font = { bold: true };
+
+          // Add balance calculation
+          worksheet.getCell(`B${totalRow + 2}`).value = "Баланс:";
+          worksheet.getCell(`B${totalRow + 2}`).font = { bold: true };
+          worksheet.getCell(`E${totalRow + 2}`).value = {
+            formula: `E${totalRow}-E${totalRow + 1}`,
+            date1904: false
+          };
+          worksheet.getCell(`E${totalRow + 2}`).font = { bold: true };
 
           // Set response headers
           res.setHeader(

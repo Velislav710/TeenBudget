@@ -44,15 +44,20 @@ const Reports = () => {
   // Set default date range on component mount (1 year period) and set max date to today
   useEffect(() => {
     const today = new Date();
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(today.getFullYear() - 1);
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(today.getMonth() - 1);
 
-    // Format today as YYYY-MM-DD for the max attribute
+    // Handle month underflow (e.g., January - 1 = December of previous year)
+    if (today.getMonth() === 0) {
+      oneMonthAgo.setFullYear(today.getFullYear() - 1);
+      oneMonthAgo.setMonth(11);
+    }
+
     const formattedToday = today.toISOString().split('T')[0];
     setMaxDate(formattedToday);
 
     setDateRange({
-      start: oneYearAgo.toISOString().split('T')[0],
+      start: oneMonthAgo.toISOString().split('T')[0],
       end: formattedToday,
     });
   }, []);
