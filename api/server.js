@@ -186,7 +186,7 @@ app.post("/signin", (req, res) => {
         .json({ error: "Въведената парола е грешна или непълна!" });
 
     const token = jwt.sign({ id: user.id }, SECRET_KEY, {
-      expiresIn: rememberMe ? "7d" : "7d"
+      expiresIn: rememberMe ? "7d" : "1h"
     });
 
     const encodedToken = Buffer.from(token).toString("base64");
@@ -763,7 +763,7 @@ app.post("/reports/pdf", (req, res) => {
 
           // Generate PDF with proper font for Cyrillic characters
           const doc = new PDFDocument({
-            font: "times.ttf", // Default font
+            font: "../app/src/fonts/times.ttf", // Default font
             size: "A4",
             info: {
               Title: "Финансов отчет",
